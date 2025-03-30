@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     "carehomemanagers.apps.CarehomemanagersConfig",
     "feedbacks.apps.FeedbacksConfig",
     "reports.apps.ReportsConfig",
+    "analysis.apps.AnalysisConfig"
 ]
 
 MIDDLEWARE = [
