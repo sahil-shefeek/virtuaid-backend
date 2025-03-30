@@ -1,12 +1,12 @@
 import uuid
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
-from residents.models import Associates
+from residents.models import Resident
 
 
 class Feedback(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    associate = models.ForeignKey(Associates, on_delete=models.RESTRICT)
+    resident = models.ForeignKey(Resident, on_delete=models.RESTRICT)
     created_at = models.DateTimeField(auto_now_add=True)
     session_date = models.DateField()
     session_duration = models.PositiveIntegerField()

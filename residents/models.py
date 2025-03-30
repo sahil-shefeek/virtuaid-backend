@@ -4,7 +4,7 @@ from django.db import models
 from carehomes.models import CareHomes
 
 
-class Associates(models.Model):
+class Resident(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.CharField(max_length=125)
     date_of_birth = models.DateField()

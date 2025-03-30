@@ -10,7 +10,7 @@ class ReportsViewSet(viewsets.ModelViewSet):
     serializer_class = ReportsSerializer
     filter_backends = (DjangoFilterBackend, filters.OrderingFilter)
     filterset_class = ReportsFilter
-    ordering_fields = ['report_month', 'associate']
+    ordering_fields = ['report_month', 'resident']
     ordering = ['report_month']
 
     def get_queryset(self):
@@ -18,7 +18,7 @@ class ReportsViewSet(viewsets.ModelViewSet):
         if user.is_superadmin:
             return Reports.objects.all()
         elif user.is_admin:
-            return Reports.objects.filter(associate__care_home__admin=user)
+            return Reports.objects.filter(resident__care_home__admin=user)
         elif user.is_manager:
-            return Reports.objects.filter(associate__care_home__carehomemanagers__manager=user)
+            return Reports.objects.filter(resident__care_home__carehomemanagers__manager=user)
         return Reports.objects.none()

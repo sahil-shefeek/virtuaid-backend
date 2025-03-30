@@ -15,10 +15,10 @@ class FeedbackPermission(BasePermission):
             return queryset
         elif user.groups.filter(name='Admin').exists():
             return queryset.filter(
-                associate__care_home__admin=user
+                resident__care_home__admin=user
             )
         elif user.groups.filter(name='Manager').exists():
             return queryset.filter(
-                associate__care_home__carehomemanagers__manager=user
+                resident__care_home__carehomemanagers__manager=user
             )
         return queryset.none()

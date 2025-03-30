@@ -1,15 +1,15 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, filters
 from rest_framework.exceptions import ValidationError
-from residents.models import Associates
-from residents.serializers import AssociatesSerializer, AssociatesCreateSerializer
+from residents.models import Resident
+from residents.serializers import ResidentSerializer, ResidentCreateSerializer
 from carehomemanagers.models import CarehomeManagers
 from carehomes.models import CareHomes
 
 
-class AssociateViewSet(viewsets.ModelViewSet):
-    queryset = Associates.objects.all()
-    serializer_class = AssociatesSerializer
+class ResidentViewSet(viewsets.ModelViewSet):
+    queryset = Resident.objects.all()
+    serializer_class = ResidentSerializer
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     search_fields = ['name']
 
@@ -25,8 +25,8 @@ class AssociateViewSet(viewsets.ModelViewSet):
 
     def get_serializer_class(self):
         if self.action == 'create':
-            return AssociatesCreateSerializer
-        return AssociatesSerializer
+            return ResidentCreateSerializer
+        return ResidentSerializer
 
     def perform_create(self, serializer):
         user = self.request.user

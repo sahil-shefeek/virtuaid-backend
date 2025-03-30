@@ -9,7 +9,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.files import File
 import os
-from residents.models import Associates
+from residents.models import Resident
 from carehomes.models import CareHomes
 from carehomemanagers.models import CarehomeManagers
 from feedbacks.models import Feedback
@@ -21,7 +21,7 @@ DEFAULT_PASSWORD = 'Password@123'  # Alternatively fake.password() for a random 
 
 
 class Command(BaseCommand):
-    help = 'Fill the database with mock data for CareHomes, Associates, Feedback, and Reports models'
+    help = 'Fill the database with mock data for CareHomes, Residents, Feedback, and Reports models'
 
     def create_mock_care_homes(self, number, create_new_managers=True):
         for _ in range(number):
@@ -129,23 +129,23 @@ class Command(BaseCommand):
 
         carehomes = CareHomes.objects.all()
 
-        add_new_associates = input("Do you want to add new Resident entries? (Yes/No): ").lower().strip()
-        if add_new_associates not in ['yes', 'y', 'no', 'n']:
+        add_new_residents = input("Do you want to add new Resident entries? (Yes/No): ").lower().strip()
+        if add_new_residents not in ['yes', 'y', 'no', 'n']:
             self.stdout.write(self.style.ERROR('Invalid input. Please enter either "Yes" "(Y/y)" or "No" "(N/n)".'))
             return
 
-        # Create new Associates for existing CareHomes
-        if add_new_associates == 'yes' or 'y':
+        # Create new Residents for existing CareHomes
+        if add_new_residents == 'yes' or 'y':
             try:
-                num_new_associates = int(input("How many new Resident entries do you want to add? "))
-                if num_new_associates < 0:
+                num_new_residents = int(input("How many new Resident entries do you want to add? "))
+                if num_new_residents < 0:
                     raise ValueError("Number of new Resident must be a non-negative integer.")
             except ValueError as e:
                 self.stdout.write(self.style.ERROR(f'Invalid input: {e}'))
                 return
 
-            for _ in range(num_new_associates):
-                Associates.objects.create(
+            for _ in range(num_new_residents):
+                Resident.objects.create(
                     name=fake.name(),
                     date_of_birth=fake.date_of_birth(minimum_age=40, maximum_age=90),
                     care_home=choice(carehomes),
@@ -153,9 +153,9 @@ class Command(BaseCommand):
                 )
 
             self.stdout.write(
-                self.style.SUCCESS(f'Successfully filled the database with {num_new_associates} residents.'))
+                self.style.SUCCESS(f'Successfully filled the database with {num_new_residents} residents.'))
 
-        associates = Associates.objects.all()
+        residents = Resident.objects.all()
         add_new_feedbacks = input("Do you want to add new Feedback entries? (Yes/No): ").lower().strip()
         if add_new_feedbacks not in ['yes', 'y', 'no', 'n']:
             self.stdout.write(self.style.ERROR('Invalid input. Please enter either "Yes" "(Y/y)" or "No" "(N/n)".'))
@@ -172,7 +172,7 @@ class Command(BaseCommand):
 
             for _ in range(num_new_feedbacks):
                 Feedback.objects.create(
-                    associate=choice(associates),
+                    resident=choice(residents),
                     session_date=date.today() - timedelta(days=randint(1, 30)),
                     session_duration=randint(30, 120),
                     vr_experience=choice(["PHYSICAL", "COGNITIVE", "MINDFULNESS"]),
@@ -212,7 +212,7 @@ class Command(BaseCommand):
 
                 with open(pdf_path, 'rb') as pdf_file:
                     Reports.objects.create(
-                        associate=choice(associates),
+                        resident=choice(residents),
                         report_month=date.today() - timedelta(days=randint(1, 30)),
                         description=fake.text(),
                         pdf=File(pdf_file, name=f'{uuid.uuid4()}.pdf')

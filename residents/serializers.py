@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from carehomes.models import CareHomes
-from .models import Associates
+from .models import Resident
 
 
 class CareHomeSerializer(serializers.ModelSerializer):
@@ -11,7 +11,7 @@ class CareHomeSerializer(serializers.ModelSerializer):
         fields = ['name']
 
 
-class AssociatesSerializer(serializers.HyperlinkedModelSerializer):
+class ResidentSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='residents-detail')
     care_home = CareHomeSerializer(read_only=True)
     created_by = serializers.HyperlinkedRelatedField(
@@ -20,11 +20,11 @@ class AssociatesSerializer(serializers.HyperlinkedModelSerializer):
     )
 
     class Meta:
-        model = Associates
+        model = Resident
         fields = ['url', 'id', 'name', 'date_of_birth', 'care_home', 'created_by']
 
 
-class AssociatesCreateSerializer(serializers.ModelSerializer):
+class ResidentCreateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Associates
+        model = Resident
         fields = ['name', 'date_of_birth']

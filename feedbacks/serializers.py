@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from residents.models import Associates
+from residents.models import Resident
 from feedbacks.models import Feedback
 
 

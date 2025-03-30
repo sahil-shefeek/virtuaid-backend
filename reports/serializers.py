@@ -1,12 +1,12 @@
 from rest_framework import serializers
-from residents.models import Associates
+from residents.models import Resident
 from reports.models import Reports
 
 
 class ReportsSerializer(serializers.HyperlinkedModelSerializer):
     url = serializers.HyperlinkedIdentityField(view_name='reports-detail')
-    associate = serializers.HyperlinkedRelatedField(
-        queryset=Associates.objects.all(),
+    resident = serializers.HyperlinkedRelatedField(
+        queryset=Resident.objects.all(),
         view_name='residents-detail'
     )
 
@@ -16,7 +16,7 @@ class ReportsSerializer(serializers.HyperlinkedModelSerializer):
             'id',
             'url',
             'report_month',
-            'associate',
+            'resident',
             'description',
             'pdf'
         ]
