@@ -1,8 +1,8 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, filters
 from rest_framework.exceptions import ValidationError
-from associates.models import Associates
-from associates.serializers import AssociatesSerializer, AssociatesCreateSerializer
+from residents.models import Associates
+from residents.serializers import AssociatesSerializer, AssociatesCreateSerializer
 from carehomemanagers.models import CarehomeManagers
 from carehomes.models import CareHomes
 

@@ -9,7 +9,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.files import File
 import os
-from associates.models import Associates
+from residents.models import Associates
 from carehomes.models import CareHomes
 from carehomemanagers.models import CarehomeManagers
 from feedbacks.models import Feedback

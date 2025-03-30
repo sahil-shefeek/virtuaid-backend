@@ -1,7 +1,7 @@
 import uuid
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
-from associates.models import Associates
+from residents.models import Associates
 
 
 class Feedback(models.Model):

@@ -12,7 +12,7 @@ class CareHomeSerializer(serializers.ModelSerializer):
 
 
 class AssociatesSerializer(serializers.HyperlinkedModelSerializer):
-    url = serializers.HyperlinkedIdentityField(view_name='associates-detail')
+    url = serializers.HyperlinkedIdentityField(view_name='residents-detail')
     care_home = CareHomeSerializer(read_only=True)
     created_by = serializers.HyperlinkedRelatedField(
         queryset=get_user_model().objects.all(),

@@ -58,7 +58,7 @@ INSTALLED_APPS = [
     "django_filters",
     "api.apps.ApiConfig",
     "authentication.apps.AuthenticationConfig",
-    "associates.apps.AssociatesConfig",
+    "residents.apps.AssociatesConfig",
     "carehomes.apps.CarehomesConfig",
     "carehomemanagers.apps.CarehomemanagersConfig",
     "feedbacks.apps.FeedbacksConfig",

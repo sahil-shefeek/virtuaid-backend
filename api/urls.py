@@ -7,7 +7,7 @@ from drf_spectacular.views import (
 
 urlpatterns = [
     path('auth/', include('authentication.urls')),
-    path('associates/', include('associates.urls')),
+    path('residents/', include('residents.urls')),
     path('carehomes/', include('carehomes.urls')),
     path('carehome-managers/', include('carehomemanagers.urls')),
     path('feedbacks/', include('feedbacks.urls')),
