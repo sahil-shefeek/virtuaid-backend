@@ -1,7 +1,7 @@
 from rest_framework import viewsets, filters
 from rest_framework.response import Response
 
-from carehomemanagers.models import CarehomeManagers
+from carehome_managers.models import CarehomeManagers
 from feedbacks.models import Feedback
 from feedbacks.serializers import FeedbackSerializer
 

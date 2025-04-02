@@ -2,8 +2,8 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
-from carehomemanagers.models import CarehomeManagers
-from carehomemanagers.serializers import CarehomeManagerSerializer, InterfaceUserSerializer, \
+from carehome_managers.models import CarehomeManagers
+from carehome_managers.serializers import CarehomeManagerSerializer, InterfaceUserSerializer, \
     CreateCarehomeManagerSerializer
 from carehomes.models import CareHomes
 import uuid
@@ -95,8 +95,8 @@ def clear_carehomes_cache(sender, instance, **kwargs):
 # from rest_framework.response import Response
 # from django.contrib.auth import get_user_model
 # from django.contrib.auth.models import Group
-# from carehomemanagers.models import CarehomeManagers
-# from carehomemanagers.serializers import CarehomeManagerSerializer, InterfaceUserSerializer
+# from carehome_managers.models import CarehomeManagers
+# from carehome_managers.serializers import CarehomeManagerSerializer, InterfaceUserSerializer
 # from carehomes.models import CareHomes
 # import uuid
 # from django.core.cache import cache

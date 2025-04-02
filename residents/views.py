@@ -3,7 +3,7 @@ from rest_framework import viewsets, filters
 from rest_framework.exceptions import ValidationError
 from residents.models import Resident
 from residents.serializers import ResidentSerializer, ResidentCreateSerializer
-from carehomemanagers.models import CarehomeManagers
+from carehome_managers.models import CarehomeManagers
 from carehomes.models import CareHomes
 
 

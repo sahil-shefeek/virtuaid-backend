@@ -60,11 +60,11 @@ INSTALLED_APPS = [
     "authentication.apps.AuthenticationConfig",
     "residents.apps.ResidentConfig",
     "carehomes.apps.CarehomesConfig",
-    "carehomemanagers.apps.CarehomemanagersConfig",
+    "carehome_managers.apps.CarehomemanagersConfig",
     "feedbacks.apps.FeedbacksConfig",
     "reports.apps.ReportsConfig",
     "analysis.apps.AnalysisConfig",
-    "sessions.apps.SessionsConfig"
+    "therapy_sessions.apps.SessionsConfig"
 ]
 
 MIDDLEWARE = [

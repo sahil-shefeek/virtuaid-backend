@@ -10,7 +10,7 @@ class Session(models.Model):
         ('cancelled', 'Cancelled'),
     )
     
-    resident = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='sessions')
+    resident = models.ForeignKey(Resident, on_delete=models.CASCADE, related_name='therapy_sessions')
     scheduled_date = models.DateTimeField()
     end_time = models.DateTimeField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='scheduled')

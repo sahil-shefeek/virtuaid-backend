@@ -11,7 +11,7 @@ from django.core.files import File
 import os
 from residents.models import Resident
 from carehomes.models import CareHomes
-from carehomemanagers.models import CarehomeManagers
+from carehome_managers.models import CarehomeManagers
 from feedbacks.models import Feedback
 from reports.models import Reports
 

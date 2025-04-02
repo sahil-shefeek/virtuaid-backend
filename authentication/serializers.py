@@ -1,7 +1,7 @@
 from django.contrib.auth.models import Group
 from rest_framework_simplejwt.exceptions import InvalidToken
 
-from carehomemanagers.models import CarehomeManagers
+from carehome_managers.models import CarehomeManagers
 from .models import InterfaceUser
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
