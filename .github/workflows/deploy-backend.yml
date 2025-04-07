@@ -1,0 +1,30 @@
+name: Deploy Django Backend
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H virtuaid.sahilshefeek.live >> ~/.ssh/known_hosts
+
+    - name: Deploy Django
+      run: |
+        ssh ci-deploy@virtuaid.sahilshefeek.live << 'EOF'
+          cd virtuaid-backend
+          git pull origin main
+          source .venv/bin/activate
+          pip install -r requirements.txt
+          python manage.py migrate
+          python manage.py collectstatic --noinput
+          sudo systemctl restart gunicorn
+        EOF
