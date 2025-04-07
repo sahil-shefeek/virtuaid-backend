@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Session
+from .models import TherapySession
 from residents.serializers import ResidentSerializer
 
 class SessionSerializer(serializers.ModelSerializer):
@@ -7,7 +7,7 @@ class SessionSerializer(serializers.ModelSerializer):
     feedback_status = serializers.SerializerMethodField()
     
     class Meta:
-        model = Session
+        model = TherapySession
         fields = '__all__'
         
     def get_feedback_status(self, obj):
@@ -20,5 +20,5 @@ class SessionSerializer(serializers.ModelSerializer):
 
 class SessionCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Session
+        model = TherapySession
         fields = '__all__'

@@ -2,7 +2,7 @@ from django.db import models
 from residents.models import Resident
 from feedbacks.models import Feedback
 
-class Session(models.Model):
+class TherapySession(models.Model):
     STATUS_CHOICES = (
         ('scheduled', 'Scheduled'),
         ('in_progress', 'In Progress'),

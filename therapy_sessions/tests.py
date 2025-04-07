@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from residents.models import Resident
 from carehomes.models import CareHome
 from feedbacks.models import Feedback
-from .models import Session
+from .models import TherapySession
 from .serializers import SessionSerializer, SessionCreateUpdateSerializer
 
 class SessionModelTest(TestCase):
@@ -28,7 +28,7 @@ class SessionModelTest(TestCase):
         )
         
         # Create a session
-        self.session = Session.objects.create(
+        self.session = TherapySession.objects.create(
             resident=self.resident,
             scheduled_date=timezone.now() + timedelta(days=1),
             status='scheduled',
@@ -37,7 +37,7 @@ class SessionModelTest(TestCase):
 
     def test_session_creation(self):
         """Test the session model creation"""
-        self.assertTrue(isinstance(self.session, Session))
+        self.assertTrue(isinstance(self.session, TherapySession))
         self.assertEqual(self.session.__str__(), f"Session for {self.resident} on {self.session.scheduled_date}")
 
     def test_session_default_status(self):
@@ -72,7 +72,7 @@ class SessionSerializerTest(TestCase):
         )
         
         # Create a session
-        self.session = Session.objects.create(
+        self.session = TherapySession.objects.create(
             resident=self.resident,
             scheduled_date=timezone.now() + timedelta(days=1),
             status='scheduled',
@@ -80,7 +80,7 @@ class SessionSerializerTest(TestCase):
         )
         
         # Create a completed session without feedback
-        self.completed_session = Session.objects.create(
+        self.completed_session = TherapySession.objects.create(
             resident=self.resident,
             scheduled_date=timezone.now() - timedelta(days=1),
             end_time=timezone.now() - timedelta(hours=1),
@@ -95,7 +95,7 @@ class SessionSerializerTest(TestCase):
         )
         
         # Create a completed session with feedback
-        self.session_with_feedback = Session.objects.create(
+        self.session_with_feedback = TherapySession.objects.create(
             resident=self.resident,
             scheduled_date=timezone.now() - timedelta(days=2),
             end_time=timezone.now() - timedelta(days=2, hours=1),
@@ -156,7 +156,7 @@ class SessionAPITest(APITestCase):
         now = timezone.now()
         
         # Scheduled session for today
-        self.today_session = Session.objects.create(
+        self.today_session = TherapySession.objects.create(
             resident=self.resident1,
             scheduled_date=now.replace(hour=14, minute=0),  # Today at 2 PM
             status='scheduled',
@@ -164,7 +164,7 @@ class SessionAPITest(APITestCase):
         )
         
         # Scheduled session for future
-        self.future_session = Session.objects.create(
+        self.future_session = TherapySession.objects.create(
             resident=self.resident2,
             scheduled_date=now + timedelta(days=2),
             status='scheduled',
@@ -172,7 +172,7 @@ class SessionAPITest(APITestCase):
         )
         
         # Completed session
-        self.completed_session = Session.objects.create(
+        self.completed_session = TherapySession.objects.create(
             resident=self.resident1,
             scheduled_date=now - timedelta(days=2),
             end_time=now - timedelta(days=2, hours=1),
@@ -181,7 +181,7 @@ class SessionAPITest(APITestCase):
         )
         
         # In progress session
-        self.in_progress_session = Session.objects.create(
+        self.in_progress_session = TherapySession.objects.create(
             resident=self.resident2,
             scheduled_date=now - timedelta(hours=1),
             status='in_progress',
@@ -195,7 +195,7 @@ class SessionAPITest(APITestCase):
         )
         
         # Session with feedback
-        self.session_with_feedback = Session.objects.create(
+        self.session_with_feedback = TherapySession.objects.create(
             resident=self.resident1,
             scheduled_date=now - timedelta(days=4),
             end_time=now - timedelta(days=4, hours=1),
@@ -223,8 +223,8 @@ class SessionAPITest(APITestCase):
         }
         response = self.client.post(self.list_url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Session.objects.count(), 6)
-        self.assertEqual(Session.objects.latest('id').notes, 'New test session')
+        self.assertEqual(TherapySession.objects.count(), 6)
+        self.assertEqual(TherapySession.objects.latest('id').notes, 'New test session')
 
     def test_retrieve_session(self):
         """Test retrieving a single session"""
@@ -249,11 +249,11 @@ class SessionAPITest(APITestCase):
 
     def test_delete_session(self):
         """Test deleting a session"""
-        initial_count = Session.objects.count()
+        initial_count = TherapySession.objects.count()
         url = reverse('session-detail', args=[self.future_session.id])
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertEqual(Session.objects.count(), initial_count - 1)
+        self.assertEqual(TherapySession.objects.count(), initial_count - 1)
 
     def test_mark_completed_action(self):
         """Test the mark_completed custom action"""

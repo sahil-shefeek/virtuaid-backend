@@ -3,12 +3,12 @@ from rest_framework import viewsets, filters, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Session
+from .models import TherapySession
 from .serializers import SessionSerializer, SessionCreateUpdateSerializer
 from django.utils import timezone
 
 class SessionViewSet(viewsets.ModelViewSet):
-    queryset = Session.objects.all()
+    queryset = TherapySession.objects.all()
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['status', 'resident']
     search_fields = ['resident__name', 'notes']
@@ -20,7 +20,7 @@ class SessionViewSet(viewsets.ModelViewSet):
         return SessionSerializer
     
     def get_queryset(self):
-        queryset = Session.objects.all()
+        queryset = TherapySession.objects.all()
         
         # Filter by status categories
         status_category = self.request.query_params.get('status_category', None)
