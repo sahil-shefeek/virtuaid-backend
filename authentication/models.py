@@ -19,6 +19,27 @@ class InterfaceUserManager(BaseUserManager):
             if not self.model.objects.filter(username=username).exists():
                 return username
 
+    def create_user(self, email, name=None, password=None, **extra_fields):
+        """
+        This method is intentionally designed to raise an error since all users should be created 
+        with specific role-based methods.
+        Use create_superadmin, create_admin, or create_manager instead.
+        """
+        role = extra_fields.get('role', None)
+        
+        if role == 'superadmin':
+            return self.create_superadmin(email=email, name=name, password=password)
+        elif role == 'admin':
+            created_by = extra_fields.get('created_by', None)
+            return self.create_admin(email=email, name=name, password=password, created_by=created_by)
+        elif role == 'manager':
+            created_by = extra_fields.get('created_by', None)
+            return self.create_manager(email=email, name=name, password=password, created_by=created_by)
+        else:
+            raise ValueError(
+                "Generic create_user is not supported. Use create_superadmin, create_admin, or create_manager instead."
+            )
+
     def create_admin(self, email, name, password=None, created_by=None, username=None, avatar=None):
         if not email:
             raise ValueError('Admin must have an email address')
