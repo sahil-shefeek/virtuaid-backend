@@ -55,6 +55,10 @@ class Command(BaseCommand):
             Permission.objects.get(codename='change_carehomemanagers'),
             Permission.objects.get(codename='delete_carehomemanagers'),
             Permission.objects.get(codename='view_carehomemanagers'),
+            Permission.objects.get(codename='add_therapysession'),
+            Permission.objects.get(codename='change_therapysession'),
+            Permission.objects.get(codename='delete_therapysession'),
+            Permission.objects.get(codename='view_therapysession'),
             Permission.objects.get(codename='add_feedback'),
             Permission.objects.get(codename='view_feedback'),
             Permission.objects.get(codename='add_reports'),
@@ -71,6 +75,7 @@ class Command(BaseCommand):
             Permission.objects.get(codename='delete_resident'),
             Permission.objects.get(codename='view_resident'),
             Permission.objects.get(codename='view_reports'),
+            Permission.objects.get(codename='view_therapysession'),
         )
 
         self.stdout.write(self.style.SUCCESS('User-group permissions initialised successfully.'))
