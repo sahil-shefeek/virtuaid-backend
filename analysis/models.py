@@ -1,6 +1,7 @@
 import uuid
 from django.db import models
 from residents.models import Resident
+from therapy_sessions.models import TherapySession
 
 def video_upload_path(instance, filename):
     """Generate a unique path for uploaded videos"""
@@ -14,6 +15,14 @@ class Video(models.Model):
     file_size = models.BigIntegerField(default=0, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    therapy_session = models.ForeignKey(
+        TherapySession, 
+        on_delete=models.CASCADE, 
+        related_name='videos',
+        null=True,
+        blank=True
+    )
+    # Keeping resident field as null=True to support migration
     resident = models.ForeignKey(
         Resident, 
         on_delete=models.CASCADE, 
