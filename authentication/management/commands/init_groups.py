@@ -63,6 +63,8 @@ class Command(BaseCommand):
             Permission.objects.get(codename='view_feedback'),
             Permission.objects.get(codename='add_reports'),
             Permission.objects.get(codename='view_reports'),
+            Permission.objects.get(codename='add_video'),
+            Permission.objects.get(codename='view_video'),
         )
 
         manager_group.permissions.add(
@@ -76,6 +78,8 @@ class Command(BaseCommand):
             Permission.objects.get(codename='view_resident'),
             Permission.objects.get(codename='view_reports'),
             Permission.objects.get(codename='view_therapysession'),
+            Permission.objects.get(codename='add_video'),
+            Permission.objects.get(codename='view_video'),
         )
 
         self.stdout.write(self.style.SUCCESS('User-group permissions initialised successfully.'))
