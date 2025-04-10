@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'django.contrib.sites',
     "corsheaders",
+    # Celery
+    "django_celery_results",
     "rest_framework",
     'rest_framework.authtoken',
     "rest_framework_simplejwt",
@@ -250,3 +252,18 @@ ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = (
     if ACCOUNT_EMAIL_VERIFICATION == "mandatory"
     else False
 )
+
+# Celery
+CELERY_RESULT_BACKEND = "django-db"  # Store results in database
+CELERY_BROKER_URL = "memory://"  # Use memory broker
+CELERY_TASK_ALWAYS_EAGER = DEBUG  # Run tasks synchronously in development
+CELERY_TASK_EAGER_PROPAGATES = True
+CELERY_TASK_TRACK_STARTED = True
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+
+# Add these new settings
+CELERY_BROKER_CONNECTION_RETRY = True
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+CELERY_BROKER_CONNECTION_MAX_RETRIES = 10
