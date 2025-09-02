@@ -11,9 +11,21 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from rest_framework import exceptions, status
 from rest_framework.response import Response
 from django.conf import settings
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
 
 
+@extend_schema_view(
+    retrieve=extend_schema(
+        summary="Get current user details",
+        description="Retrieve the details of the currently authenticated user.",
+        tags=["Authentication"]
+    )
+)
 class UserDetailView(generics.RetrieveAPIView):
+    """
+    Retrieve the details of the currently authenticated user.
+    """
     queryset = InterfaceUser.objects.all()
     serializer_class = InterfaceUserSerializer
 
@@ -21,7 +33,56 @@ class UserDetailView(generics.RetrieveAPIView):
         return self.request.user
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary="List all users",
+        description="Retrieve a list of all interface users in the system.",
+        tags=["Authentication"]
+    ),
+    create=extend_schema(
+        summary="Create a new user",
+        description="Create a new interface user. User type can be specified via query parameter.",
+        parameters=[
+            OpenApiParameter(
+                name='type',
+                description='Type of user to create (admin, manager)',
+                required=False,
+                type=OpenApiTypes.STR,
+                location=OpenApiParameter.QUERY
+            )
+        ],
+        tags=["Authentication"]
+    ),
+    retrieve=extend_schema(
+        summary="Get user details",
+        description="Retrieve details of a specific user by ID.",
+        tags=["Authentication"]
+    ),
+    update=extend_schema(
+        summary="Update user",
+        description="Update all fields of a specific user.",
+        tags=["Authentication"]
+    ),
+    partial_update=extend_schema(
+        summary="Partially update user",
+        description="Update specific fields of a user.",
+        tags=["Authentication"]
+    ),
+    destroy=extend_schema(
+        summary="Delete user",
+        description="Delete a specific user from the system.",
+        tags=["Authentication"]
+    )
+)
 class InterfaceUserViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing interface users in the system.
+    
+    Provides CRUD operations for users with different roles:
+    - SuperAdmin: Can manage all users
+    - Admin: Can manage care home related users
+    - Manager: Limited access based on care home assignments
+    """
     queryset = InterfaceUser.objects.all()
     serializer_class = InterfaceUserSerializer
 

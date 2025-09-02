@@ -58,6 +58,8 @@ INSTALLED_APPS = [
     'dj_rest_auth',
     'dj_rest_auth.registration',
     "django_filters",
+    # API Documentation
+    "drf_spectacular",
     "api.apps.ApiConfig",
     "authentication.apps.AuthenticationConfig",
     "residents.apps.ResidentConfig",
@@ -211,9 +213,47 @@ REST_FRAMEWORK = {
 }
 
 SPECTACULAR_SETTINGS = {
-    "TITLE": "Virtual Aid API",
-    "DESCRIPTION": "https://github.com/sahil-shefeek/virtuaid-backend",
+    "TITLE": "VirtuAid API",
+    "DESCRIPTION": "REST API for VirtuAid - Virtual Reality Therapy Platform for Care Homes. This API provides endpoints for managing care homes, residents, therapy sessions, emotion analysis, and more.",
     "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    # Tags for grouping endpoints
+    "TAGS": [
+        {"name": "Authentication", "description": "User authentication and authorization"},
+        {"name": "Care Homes", "description": "Care home management"},
+        {"name": "Care Home Managers", "description": "Manager assignments for care homes"},
+        {"name": "Residents", "description": "Resident management"},
+        {"name": "Therapy Sessions", "description": "VR therapy session management"},
+        {"name": "Analysis", "description": "Video emotion analysis and insights"},
+        {"name": "Reports", "description": "Therapy reports and analytics"},
+        {"name": "Feedbacks", "description": "Session feedback management"},
+    ],
+    # Security schemes
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "jwtAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "JWT token authentication. Use 'Bearer <token>' format."
+            }
+        }
+    },
+    "SECURITY": [{"jwtAuth": []}],
+    # Schema generation settings
+    "SCHEMA_PATH_PREFIX": "/api/",
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SORT_OPERATIONS": True,
+    # UI settings
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "persistAuthorization": True,
+        "displayOperationId": True,
+        "defaultModelsExpandDepth": 2,
+        "defaultModelExpandDepth": 2,
+        "filter": True,
+        "tryItOutEnabled": True,
+    }
 }
 
 SIMPLE_JWT = {

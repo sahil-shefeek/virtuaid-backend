@@ -1,14 +1,14 @@
-from django.shortcuts import render
-from rest_framework import viewsets, filters, status, generics
+from django.utils import timezone
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django_filters.rest_framework import DjangoFilterBackend
-from django.urls import reverse
-from django.utils import timezone
+
 from analysis.models import Video
 from analysis.serializers import VideoSerializer
+
 from .models import TherapySession
-from .serializers import SessionSerializer, SessionCreateUpdateSerializer
+from .serializers import SessionCreateUpdateSerializer, SessionSerializer
 
 class SessionViewSet(viewsets.ModelViewSet):
     queryset = TherapySession.objects.all()
@@ -73,21 +73,16 @@ class SessionViewSet(viewsets.ModelViewSet):
         session.save()
         return Response({'status': 'Session cancelled'}, status=status.HTTP_200_OK)
 
-class SessionVideosView(generics.ListAPIView):
-    """
-    View to list all videos associated with a therapy session along with their analysis endpoints
-    """
-    serializer_class = VideoSerializer
-    
-    def get_queryset(self):
-        session_id = self.kwargs.get('session_pk')
-        return Video.objects.filter(therapy_session__id=session_id)
-    
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
+    @action(detail=True, methods=['get'], url_path='videos')
+    def session_videos(self, request, pk=None):
+        """
+        Get all videos associated with this therapy session along with their analysis endpoints
+        """
+        session = self.get_object()
+        videos = Video.objects.filter(therapy_session=session)
         data = []
         
-        for video in queryset:
+        for video in videos:
             video_data = VideoSerializer(video).data
             # Add URLs for emotion analysis endpoints
             video_data['emotion_analysis_urls'] = {

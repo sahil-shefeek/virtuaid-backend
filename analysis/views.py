@@ -19,7 +19,7 @@ from .serializers import (
     EmotionTimelineSerializer,
     VideoDetailSerializer
 )
-from .tasks import analyze_video_emotions
+from .tasks import analyze_video_emotions  # Temporarily commented out
 
 class VideoViewSet(viewsets.ModelViewSet):
     queryset = Video.objects.all()
@@ -87,6 +87,58 @@ class VideoViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
+    @action(detail=True, methods=['get'], url_path='frames')
+    def emotion_frames(self, request, pk=None):
+        """Get emotion analysis frames for this video"""
+        try:
+            video = self.get_object()
+            frames = EmotionAnalysis.objects.filter(
+                video=video
+            ).order_by('timestamp')
+            serializer = EmotionAnalysisSerializer(frames, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=True, methods=['get'], url_path='timeline')
+    def emotion_timeline(self, request, pk=None):
+        """Get emotion timeline for this video"""
+        try:
+            video = self.get_object()
+            timeline = EmotionTimeline.objects.filter(
+                video=video
+            ).order_by('start_time')
+            serializer = EmotionTimelineSerializer(timeline, many=True)
+            return Response(serializer.data)
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=True, methods=['get'], url_path='summary')
+    def emotion_summary(self, request, pk=None):
+        """Get emotion analysis summary for this video"""
+        try:
+            video = self.get_object()
+            summary = EmotionAnalysisSummary.objects.filter(video=video).first()
+            if summary:
+                serializer = EmotionAnalysisSummarySerializer(summary)
+                return Response(serializer.data)
+            else:
+                return Response(
+                    {'message': 'No summary available'},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
     @action(detail=True, methods=['get'])
     def download_data_csv(self, request, pk=None):
         """Download emotion analysis data as CSV"""
@@ -96,20 +148,25 @@ class VideoViewSet(viewsets.ModelViewSet):
             # Check if analysis is complete
             if video.status != 'completed':
                 return Response(
-                    {'error': 'Video analysis is not complete yet'}, 
+                    {'error': 'Video analysis is not complete yet'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-                
+
             # Generate CSV content
             csv_content = video.get_emotion_data_csv()
-            
+
             # Create HTTP response with CSV file
             response = HttpResponse(csv_content, content_type='text/csv')
-            response['Content-Disposition'] = f'attachment; filename="{video.title}_emotion_data.csv"'
-            
+            response['Content-Disposition'] = (
+                f'attachment; filename="{video.title}_emotion_data.csv"'
+            )
+
             return response
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
     
     @action(detail=True, methods=['get'])
     def download_timeline_csv(self, request, pk=None):
@@ -120,61 +177,24 @@ class VideoViewSet(viewsets.ModelViewSet):
             # Check if analysis is complete
             if video.status != 'completed':
                 return Response(
-                    {'error': 'Video analysis is not complete yet'}, 
+                    {'error': 'Video analysis is not complete yet'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-                
+
             # Generate CSV content
             csv_content = video.get_emotion_timeline_csv()
-            
+
             # Create HTTP response with CSV file
             response = HttpResponse(csv_content, content_type='text/csv')
-            response['Content-Disposition'] = f'attachment; filename="{video.title}_emotion_timeline.csv"'
-            
+            response['Content-Disposition'] = (
+                f'attachment; filename="{video.title}_emotion_timeline.csv"'
+            )
+
             return response
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
-class EmotionAnalysisViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = EmotionAnalysisSerializer
-    filter_backends = [filters.OrderingFilter]
-    ordering_fields = ['timestamp']
-    ordering = ['timestamp']
-    
-    def get_queryset(self):
-        try:
-            video_id = self.kwargs.get('video_pk')
-            return EmotionAnalysis.objects.filter(video__id=video_id)
-        except Exception as e:
-            print(f"Error retrieving emotion analysis: {str(e)}")
-            return EmotionAnalysis.objects.none()
-
-
-class EmotionTimelineViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = EmotionTimelineSerializer
-    filter_backends = [filters.OrderingFilter]
-    ordering_fields = ['start_time']
-    ordering = ['start_time']
-    
-    def get_queryset(self):
-        try:
-            video_id = self.kwargs.get('video_pk')
-            return EmotionTimeline.objects.filter(video__id=video_id)
-        except Exception as e:
-            print(f"Error retrieving emotion timeline: {str(e)}")
-            return EmotionTimeline.objects.none()
-
-
-class EmotionAnalysisSummaryViewSet(viewsets.ReadOnlyModelViewSet):
-    serializer_class = EmotionAnalysisSummarySerializer
-    
-    def get_queryset(self):
-        try:
-            if 'video_pk' in self.kwargs:
-                video_id = self.kwargs.get('video_pk')
-                return EmotionAnalysisSummary.objects.filter(video__id=video_id)
-            return EmotionAnalysisSummary.objects.all()
-        except Exception as e:
-            print(f"Error retrieving emotion summary: {str(e)}")
-            return EmotionAnalysisSummary.objects.none()
