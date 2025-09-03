@@ -9,6 +9,10 @@ paths:
   /api/analysis/videos/:
     get:
       operationId: analysis_videos_list
+      description: Retrieve a paginated list of therapy session videos with filtering
+        and search capabilities. Videos are filtered based on user permissions and
+        role-based access control.
+      summary: List therapy session videos
       parameters:
       - name: limit
         required: false
@@ -22,20 +26,36 @@ paths:
         description: The initial index from which to return the results.
         schema:
           type: integer
-      - name: ordering
-        required: false
-        in: query
-        description: Which field to use when ordering the results.
+      - in: query
+        name: ordering
         schema:
           type: string
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+        description: Order results by field
+        examples:
+          OrderByUploadDate(newestFirst):
+            value: -uploaded_at
+            summary: Order by upload date (newest first)
+            description: Sort by upload date descending
+          OrderByTitleAlphabetically:
+            value: title
+            summary: Order by title alphabetically
+            description: Sort by title A-Z
+      - in: query
+        name: search
         schema:
           type: string
+        description: Search videos by title or description
+        examples:
+          SearchByTitle:
+            value: CBT Session
+            summary: Search by title
+            description: Find videos with "CBT Session" in title
+          SearchByDescription:
+            value: anxiety management
+            summary: Search by description
+            description: Find videos about anxiety management
       tags:
-      - analysis
+      - Video Analysis
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -46,11 +66,37 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedVideoList'
+              examples:
+                VideoListResponse:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - count: 25
+                      next: http://api.example.com/videos/?page=2
+                      previous: null
+                      results:
+                      - id: 550e8400-e29b-41d4-a716-446655440000
+                        title: CBT Session - Week 1
+                        description: Initial cognitive behavioral therapy session
+                        file: /media/videos/cbt_week1.mp4
+                        file_size: 52428800
+                        status: completed
+                        uploaded_at: '2024-01-15T10:30:00Z'
+                        updated_at: '2024-01-15T10:45:00Z'
+                        therapy_session: 1
+                        resident: 1
+                  summary: List of therapy session videos
+                  description: Example response showing paginated video list
           description: ''
     post:
       operationId: analysis_videos_create
+      description: Upload a new video file for emotion analysis. The video will be
+        automatically queued for AI-powered emotion analysis upon successful upload.
+      summary: Upload a new therapy session video
       tags:
-      - analysis
+      - Video Analysis
       requestBody:
         content:
           multipart/form-data:
@@ -70,10 +116,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Video'
+              examples:
+                VideoUploadResponse:
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440001
+                    title: Group Therapy Session
+                    description: Multi-patient therapy session recording
+                    file: /media/videos/group_therapy_002.mp4
+                    file_size: 104857600
+                    status: pending
+                    uploaded_at: '2024-01-15T14:20:00Z'
+                    updated_at: '2024-01-15T14:20:00Z'
+                    therapy_session: 2
+                    resident: 3
+                  summary: Successful upload response
+                  description: Response after successful video upload
           description: ''
   /api/analysis/videos/{id}/:
     get:
       operationId: analysis_videos_retrieve
+      description: Retrieve comprehensive video details including embedded emotion
+        analysis summary and processing status.
+      summary: Get detailed video information
       parameters:
       - in: path
         name: id
@@ -83,7 +147,7 @@ paths:
         description: A UUID string identifying this video.
         required: true
       tags:
-      - analysis
+      - Video Analysis
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -94,9 +158,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/VideoDetail'
+              examples:
+                CompleteVideoDetails:
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    title: CBT Session - Week 1
+                    description: Initial cognitive behavioral therapy session
+                    file: /media/videos/cbt_week1.mp4
+                    file_size: 52428800
+                    uploaded_at: '2024-01-15T10:30:00Z'
+                    updated_at: '2024-01-15T10:45:00Z'
+                    status: completed
+                    therapy_session: 1
+                    resident: 1
+                    emotion_summary:
+                      id: 1
+                      video: 550e8400-e29b-41d4-a716-446655440000
+                      angry_avg: 0.12
+                      sad_avg: 0.25
+                      happy_avg: 0.63
+                      dominant_emotion: happy
+                      emotion_counts:
+                        happy: 1250
+                        sad: 480
+                        angry: 200
+                        total_frames: 1930
+                  summary: Video with analysis results
+                  description: Detailed video view including emotion analysis
           description: ''
     put:
       operationId: analysis_videos_update
+      description: Update video title, description, and linked therapy session or
+        resident information.
+      summary: Update video metadata
       parameters:
       - in: path
         name: id
@@ -106,7 +200,7 @@ paths:
         description: A UUID string identifying this video.
         required: true
       tags:
-      - analysis
+      - Video Analysis
       requestBody:
         content:
           multipart/form-data:
@@ -126,9 +220,42 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Video'
+              examples:
+                VideoUploadResponse:
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    title: Therapy Session - Patient Assessment
+                    description: Video recording of patient interaction during cognitive
+                      behavioral therapy session
+                    file: /media/videos/therapy_session_001.mp4
+                    file_size: 52428800
+                    status: pending
+                    uploaded_at: '2024-01-15T10:30:00Z'
+                    updated_at: '2024-01-15T10:30:00Z'
+                    therapy_session: 1
+                    resident: 1
+                  summary: Example video after upload
+                  description: Shows how video data appears after successful upload
+                    with initial analysis status
+                ProcessingVideo:
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440001
+                    title: Group Therapy Session
+                    description: Multi-patient therapy session recording
+                    file: /media/videos/group_therapy_002.mp4
+                    file_size: 104857600
+                    status: processing
+                    uploaded_at: '2024-01-15T14:20:00Z'
+                    updated_at: '2024-01-15T14:25:00Z'
+                    therapy_session: 2
+                    resident: 3
+                  summary: Video being analyzed
+                  description: Video in processing state during emotion analysis
           description: ''
     patch:
       operationId: analysis_videos_partial_update
+      description: Update specific video fields without affecting others.
+      summary: Partially update video metadata
       parameters:
       - in: path
         name: id
@@ -138,7 +265,7 @@ paths:
         description: A UUID string identifying this video.
         required: true
       tags:
-      - analysis
+      - Video Analysis
       requestBody:
         content:
           multipart/form-data:
@@ -157,9 +284,43 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Video'
+              examples:
+                VideoUploadResponse:
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    title: Therapy Session - Patient Assessment
+                    description: Video recording of patient interaction during cognitive
+                      behavioral therapy session
+                    file: /media/videos/therapy_session_001.mp4
+                    file_size: 52428800
+                    status: pending
+                    uploaded_at: '2024-01-15T10:30:00Z'
+                    updated_at: '2024-01-15T10:30:00Z'
+                    therapy_session: 1
+                    resident: 1
+                  summary: Example video after upload
+                  description: Shows how video data appears after successful upload
+                    with initial analysis status
+                ProcessingVideo:
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440001
+                    title: Group Therapy Session
+                    description: Multi-patient therapy session recording
+                    file: /media/videos/group_therapy_002.mp4
+                    file_size: 104857600
+                    status: processing
+                    uploaded_at: '2024-01-15T14:20:00Z'
+                    updated_at: '2024-01-15T14:25:00Z'
+                    therapy_session: 2
+                    resident: 3
+                  summary: Video being analyzed
+                  description: Video in processing state during emotion analysis
           description: ''
     delete:
       operationId: analysis_videos_destroy
+      description: Permanently delete video file and all associated emotion analysis
+        data. This action cannot be undone.
+      summary: Delete video and analysis data
       parameters:
       - in: path
         name: id
@@ -169,7 +330,7 @@ paths:
         description: A UUID string identifying this video.
         required: true
       tags:
-      - analysis
+      - Video Analysis
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -180,7 +341,9 @@ paths:
   /api/analysis/videos/{id}/analysis_status/:
     get:
       operationId: analysis_videos_analysis_status_retrieve
-      description: Get the analysis status of a video
+      description: 'Retrieve the current emotion analysis processing status for a
+        specific video. Status values include: pending, processing, completed, failed.'
+      summary: Get video analysis status
       parameters:
       - in: path
         name: id
@@ -190,22 +353,32 @@ paths:
         description: A UUID string identifying this video.
         required: true
       tags:
-      - analysis
+      - Video Analysis
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
       - jwtAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Video'
-          description: ''
+          description: Analysis status retrieved successfully
+        '500':
+          description: Server error during status retrieval
   /api/analysis/videos/{id}/download_data_csv/:
     get:
       operationId: analysis_videos_download_data_csv_retrieve
-      description: Download emotion analysis data as CSV
+      description: |-
+        Download detailed emotion analysis data for this video as a CSV file. Includes frame-by-frame emotion detection results with timestamps, confidence scores, and detected emotions.
+
+        CSV Contents:
+        - Frame number and timestamp
+        - Detected emotions with confidence scores
+        - Facial landmarks data
+        - Processing metadata
+
+        Requirements:
+        - Video analysis must be completed
+        - User must have access to the video
+      summary: Download emotion analysis data as CSV
       parameters:
       - in: path
         name: id
@@ -215,7 +388,7 @@ paths:
         description: A UUID string identifying this video.
         required: true
       tags:
-      - analysis
+      - Video Analysis
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -225,12 +398,36 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Video'
-          description: ''
+                type: string
+              examples:
+                CSVFileResponse:
+                  value: attachment; filename="emotion_data.csv"
+                  summary: CSV file response
+                  description: CSV file with emotion analysis data
+          description: CSV file download
+        '400':
+          description: Video analysis not complete
+        '404':
+          description: Video not found
+        '500':
+          description: Server error
   /api/analysis/videos/{id}/download_timeline_csv/:
     get:
       operationId: analysis_videos_download_timeline_csv_retrieve
-      description: Download emotion timeline as CSV
+      description: |-
+        Download emotion timeline data for this video as a CSV file. Provides aggregated emotion data over time intervals, showing how emotions change throughout the therapy session.
+
+        CSV Contents:
+        - Time intervals (start/end timestamps)
+        - Dominant emotion per interval
+        - Emotion intensity scores
+        - Statistical summaries
+
+        Use Cases:
+        - Progress tracking over sessions
+        - Identifying emotional patterns
+        - Research and reporting
+      summary: Download emotion timeline as CSV
       parameters:
       - in: path
         name: id
@@ -240,7 +437,7 @@ paths:
         description: A UUID string identifying this video.
         required: true
       tags:
-      - analysis
+      - Video Analysis
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -250,12 +447,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Video'
-          description: ''
-  /api/analysis/videos/{id}/reanalyze/:
-    post:
-      operationId: analysis_videos_reanalyze_create
-      description: Trigger reanalysis of the video
+                type: string
+              examples:
+                CSVTimelineResponse:
+                  value: attachment; filename="timeline.csv"
+                  summary: CSV timeline response
+                  description: CSV file with emotion timeline data
+          description: CSV file download
+        '400':
+          description: Video analysis not complete
+        '404':
+          description: Video not found
+        '500':
+          description: Server error
+  /api/analysis/videos/{id}/frames/:
+    get:
+      operationId: analysis_videos_frames_retrieve
+      description: Retrieve detailed emotion analysis data for each analyzed frame
+        in the video, ordered chronologically by timestamp.
+      summary: Get emotion analysis frames
       parameters:
       - in: path
         name: id
@@ -265,7 +475,30 @@ paths:
         description: A UUID string identifying this video.
         required: true
       tags:
-      - analysis
+      - Video Analysis
+      security:
+      - jwtHeaderAuth: []
+      - jwtCookieAuth: []
+      - jwtAuth: []
+      responses:
+        '200':
+          description: Emotion frames retrieved successfully
+  /api/analysis/videos/{id}/reanalyze/:
+    post:
+      operationId: analysis_videos_reanalyze_create
+      description: Restart the emotion analysis process for a video. This clears all
+        existing analysis data and queues the video for fresh emotion analysis processing.
+      summary: Trigger video reanalysis
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+          format: uuid
+        description: A UUID string identifying this video.
+        required: true
+      tags:
+      - Video Analysis
       requestBody:
         content:
           multipart/form-data:
@@ -281,136 +514,36 @@ paths:
       - jwtAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Video'
-          description: ''
-  /api/analysis/videos/{video_pk}/frames/:
-    get:
-      operationId: analysis_videos_frames_list
-      parameters:
-      - name: limit
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - name: offset
-        required: false
-        in: query
-        description: The initial index from which to return the results.
-        schema:
-          type: integer
-      - name: ordering
-        required: false
-        in: query
-        description: Which field to use when ordering the results.
-        schema:
-          type: string
-      - in: path
-        name: video_pk
-        schema:
-          type: string
-          format: uuid
-        required: true
-      tags:
-      - analysis
-      security:
-      - jwtHeaderAuth: []
-      - jwtCookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedEmotionAnalysisList'
-          description: ''
-  /api/analysis/videos/{video_pk}/frames/{id}/:
-    get:
-      operationId: analysis_videos_frames_retrieve
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-          format: uuid
-        description: A UUID string identifying this emotion analysis.
-        required: true
-      - in: path
-        name: video_pk
-        schema:
-          type: string
-          format: uuid
-        required: true
-      tags:
-      - analysis
-      security:
-      - jwtHeaderAuth: []
-      - jwtCookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EmotionAnalysis'
-          description: ''
-  /api/analysis/videos/{video_pk}/summary/:
-    get:
-      operationId: analysis_videos_summary_list
-      parameters:
-      - name: limit
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - name: offset
-        required: false
-        in: query
-        description: The initial index from which to return the results.
-        schema:
-          type: integer
-      - in: path
-        name: video_pk
-        schema:
-          type: string
-          format: uuid
-        required: true
-      tags:
-      - analysis
-      security:
-      - jwtHeaderAuth: []
-      - jwtCookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedEmotionAnalysisSummaryList'
-          description: ''
-  /api/analysis/videos/{video_pk}/summary/{id}/:
+          description: Reanalysis successfully queued
+        '500':
+          description: Server error during reanalysis setup
+  /api/analysis/videos/{id}/summary/:
     get:
       operationId: analysis_videos_summary_retrieve
+      description: |-
+        Retrieve the comprehensive emotion analysis summary for this video. Provides aggregated statistics, insights, and key findings from the emotion detection analysis.
+
+        Summary Includes:
+        - Overall emotion distribution
+        - Peak emotional moments
+        - Session quality metrics
+        - Therapeutic insights
+
+        Business Value:
+        - Quick session overview for therapists
+        - Progress tracking capabilities
+        - Data-driven therapy adjustments
+      summary: Get emotion analysis summary
       parameters:
       - in: path
         name: id
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this emotion analysis summary.
-        required: true
-      - in: path
-        name: video_pk
-        schema:
-          type: string
-          format: uuid
+        description: A UUID string identifying this video.
         required: true
       tags:
-      - analysis
+      - Video Analysis
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -421,78 +554,87 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/EmotionAnalysisSummary'
-          description: ''
-  /api/analysis/videos/{video_pk}/timeline/:
-    get:
-      operationId: analysis_videos_timeline_list
-      parameters:
-      - name: limit
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - name: offset
-        required: false
-        in: query
-        description: The initial index from which to return the results.
-        schema:
-          type: integer
-      - name: ordering
-        required: false
-        in: query
-        description: Which field to use when ordering the results.
-        schema:
-          type: string
-      - in: path
-        name: video_pk
-        schema:
-          type: string
-          format: uuid
-        required: true
-      tags:
-      - analysis
-      security:
-      - jwtHeaderAuth: []
-      - jwtCookieAuth: []
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/PaginatedEmotionTimelineList'
-          description: ''
-  /api/analysis/videos/{video_pk}/timeline/{id}/:
+              examples:
+                PositiveSessionSummary:
+                  value:
+                    id: 1
+                    video: 550e8400-e29b-41d4-a716-446655440000
+                    angry_avg: 0.12
+                    sad_avg: 0.25
+                    happy_avg: 0.63
+                    dominant_emotion: happy
+                    emotion_counts:
+                      happy: 1250
+                      sad: 480
+                      angry: 200
+                      total_frames: 1930
+                    created_at: '2024-01-15T10:45:00Z'
+                    updated_at: '2024-01-15T10:45:00Z'
+                  summary: Summary of a predominantly positive therapy session
+                  description: Overall emotion analysis showing good therapeutic response
+                    with detailed emotion counts
+                ChallengingSessionSummary:
+                  value:
+                    id: 2
+                    video: 550e8400-e29b-41d4-a716-446655440001
+                    angry_avg: 0.35
+                    sad_avg: 0.45
+                    happy_avg: 0.2
+                    dominant_emotion: sad
+                    emotion_counts:
+                      sad: 980
+                      angry: 760
+                      happy: 425
+                      total_frames: 2165
+                    created_at: '2024-01-15T14:30:00Z'
+                    updated_at: '2024-01-15T14:30:00Z'
+                  summary: Summary showing emotional difficulty
+                  description: Analysis of a more challenging therapy session with
+                    mixed emotional responses
+                CompleteSummary:
+                  value:
+                    id: 1
+                    video: 15
+                    dominant_emotion: calm
+                    emotion_counts:
+                      happy: 45
+                      calm: 78
+                      engaged: 32
+                      frustrated: 12
+                    average_confidence: 0.87
+                    session_quality_score: 8.3
+                    total_frames_analyzed: 1890
+                    analysis_duration: 00:03:15
+                    created_at: '2025-09-03T10:30:00Z'
+                  summary: Complete summary
+          description: Emotion analysis summary
+        '404':
+          description: Summary not found
+        '500':
+          description: Server error
+  /api/analysis/videos/{id}/timeline/:
     get:
       operationId: analysis_videos_timeline_retrieve
+      description: Retrieve emotion timeline segments showing periods of consistent
+        emotional states throughout the video.
+      summary: Get emotion timeline
       parameters:
       - in: path
         name: id
         schema:
           type: string
           format: uuid
-        description: A UUID string identifying this emotion timeline.
-        required: true
-      - in: path
-        name: video_pk
-        schema:
-          type: string
-          format: uuid
+        description: A UUID string identifying this video.
         required: true
       tags:
-      - analysis
+      - Video Analysis
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
       - jwtAuth: []
       responses:
         '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/EmotionTimeline'
-          description: ''
+          description: Emotion timeline retrieved successfully
   /api/auth/app/login/:
     post:
       operationId: auth_app_login_create
@@ -1215,7 +1357,29 @@ paths:
   /api/carehome-managers/:
     get:
       operationId: carehome_managers_list
+      description: "\n        Retrieve a list of care home managers with various filtering\
+        \ options.\n\n        **Query Parameters:**\n        - **carehome**: Filter\
+        \ managers by specific care home UUID\n        - **type=unassigned**: Get\
+        \ unassigned managers for assignment\n\n        **Permission Levels:**\n \
+        \       - **Admin**: Can view managers for care homes they manage\n      \
+        \  - **Others**: No access (empty list)\n\n        **Special Filters:**\n\
+        \        - When `carehome` parameter is provided, returns managers for that\n\
+        \          specific care home\n        - When `type=unassigned` is provided,\
+        \ returns managers who are not\n          yet assigned to any care home\n\
+        \        "
+      summary: List Care Home Managers
       parameters:
+      - in: query
+        name: carehome
+        schema:
+          type: string
+          format: uuid
+        description: UUID of the care home to filter managers
+        examples:
+          CareHomeFilter:
+            value: 550e8400-e29b-41d4-a716-446655440000
+            summary: Filter by care home UUID
+            description: Get managers assigned to a specific home
       - name: limit
         required: false
         in: query
@@ -1228,8 +1392,20 @@ paths:
         description: The initial index from which to return the results.
         schema:
           type: integer
+      - in: query
+        name: type
+        schema:
+          type: string
+          enum:
+          - unassigned
+        description: Special filter type
+        examples:
+          UnassignedManagers:
+            value: unassigned
+            summary: Get unassigned managers
+            description: Returns managers not assigned to any home
       tags:
-      - carehome-managers
+      - Care Home Managers
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -1240,16 +1416,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedCarehomeManagerList'
+              examples:
+                ManagerAssignment:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - id: 1
+                      manager:
+                        id: 123
+                        email: manager@example.com
+                        name: John Manager
+                      carehome:
+                        id: 550e8400-e29b-41d4-a716-446655440000
+                        name: Sunshine Care Home
+                        code: SUN123
+                        address: 123 Main Street, Cityville, State 12345
+                  summary: Complete manager assignment
+                  description: Example of a manager assigned to a care home
           description: ''
     post:
       operationId: carehome_managers_create
+      description: "\n        Assign a manager to a care home.\n\n        **Validation\
+        \ Rules:**\n        - Each care home can have a maximum of 5 managers\n  \
+        \      - Manager must exist and be in the 'Manager' group\n        - Care\
+        \ home must exist\n\n        **Required Fields:**\n        - carehome_id:\
+        \ UUID of the care home\n        - manager_id: ID of the manager user\n  \
+        \      "
+      summary: Assign Manager to Care Home
       tags:
-      - carehome-managers
+      - Care Home Managers
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CreateCarehomeManagerRequest'
+            examples:
+              AssignManager:
+                value:
+                  carehome_id: 550e8400-e29b-41d4-a716-446655440000
+                  manager_id: 123
+                summary: Example assignment
+                description: Assign manager with ID 123 to care home
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/CreateCarehomeManagerRequest'
@@ -1267,10 +1476,20 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CreateCarehomeManager'
+              examples:
+                AssignManager:
+                  value:
+                    carehome_id: 550e8400-e29b-41d4-a716-446655440000
+                    manager_id: 123
+                  summary: Example assignment
+                  description: Assign manager with ID 123 to care home
           description: ''
   /api/carehome-managers/{id}/:
     get:
       operationId: carehome_managers_retrieve
+      description: "\n        Retrieve details of a specific care home manager assignment.\n\
+        \        "
+      summary: Get Care Home Manager Details
       parameters:
       - in: path
         name: id
@@ -1280,7 +1499,7 @@ paths:
         description: A UUID string identifying this carehome managers.
         required: true
       tags:
-      - carehome-managers
+      - Care Home Managers
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -1291,9 +1510,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CarehomeManager'
+              examples:
+                ManagerAssignment:
+                  value:
+                    id: 1
+                    manager:
+                      id: 123
+                      email: manager@example.com
+                      name: John Manager
+                    carehome:
+                      id: 550e8400-e29b-41d4-a716-446655440000
+                      name: Sunshine Care Home
+                      code: SUN123
+                      address: 123 Main Street, Cityville, State 12345
+                  summary: Complete manager assignment
+                  description: Example of a manager assigned to a care home
           description: ''
     put:
       operationId: carehome_managers_update
+      description: "\n        Update a care home manager assignment.\n\n        **Note:**\
+        \ This is typically used to change which care home a\n        manager is assigned\
+        \ to, subject to the same validation rules.\n        "
+      summary: Update Care Home Manager Assignment
       parameters:
       - in: path
         name: id
@@ -1303,12 +1541,27 @@ paths:
         description: A UUID string identifying this carehome managers.
         required: true
       tags:
-      - carehome-managers
+      - Care Home Managers
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CarehomeManagerRequest'
+            examples:
+              ManagerAssignment:
+                value:
+                  id: 1
+                  manager:
+                    id: 123
+                    email: manager@example.com
+                    name: John Manager
+                  carehome:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    name: Sunshine Care Home
+                    code: SUN123
+                    address: 123 Main Street, Cityville, State 12345
+                summary: Complete manager assignment
+                description: Example of a manager assigned to a care home
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/CarehomeManagerRequest'
@@ -1326,9 +1579,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CarehomeManager'
+              examples:
+                ManagerAssignment:
+                  value:
+                    id: 1
+                    manager:
+                      id: 123
+                      email: manager@example.com
+                      name: John Manager
+                    carehome:
+                      id: 550e8400-e29b-41d4-a716-446655440000
+                      name: Sunshine Care Home
+                      code: SUN123
+                      address: 123 Main Street, Cityville, State 12345
+                  summary: Complete manager assignment
+                  description: Example of a manager assigned to a care home
           description: ''
     patch:
       operationId: carehome_managers_partial_update
+      description: Partially update care home manager assignment details.
+      summary: Partially Update Manager Assignment
       parameters:
       - in: path
         name: id
@@ -1338,12 +1608,27 @@ paths:
         description: A UUID string identifying this carehome managers.
         required: true
       tags:
-      - carehome-managers
+      - Care Home Managers
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchedCarehomeManagerRequest'
+            examples:
+              ManagerAssignment:
+                value:
+                  id: 1
+                  manager:
+                    id: 123
+                    email: manager@example.com
+                    name: John Manager
+                  carehome:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    name: Sunshine Care Home
+                    code: SUN123
+                    address: 123 Main Street, Cityville, State 12345
+                summary: Complete manager assignment
+                description: Example of a manager assigned to a care home
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/PatchedCarehomeManagerRequest'
@@ -1360,9 +1645,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CarehomeManager'
+              examples:
+                ManagerAssignment:
+                  value:
+                    id: 1
+                    manager:
+                      id: 123
+                      email: manager@example.com
+                      name: John Manager
+                    carehome:
+                      id: 550e8400-e29b-41d4-a716-446655440000
+                      name: Sunshine Care Home
+                      code: SUN123
+                      address: 123 Main Street, Cityville, State 12345
+                  summary: Complete manager assignment
+                  description: Example of a manager assigned to a care home
           description: ''
     delete:
       operationId: carehome_managers_destroy
+      description: "\n        Remove a manager's assignment from a care home.\n\n\
+        \        **Effect:** The manager will no longer have access to the care home\n\
+        \        but will remain in the system for potential reassignment.\n     \
+        \   "
+      summary: Remove Manager Assignment
       parameters:
       - in: path
         name: id
@@ -1372,7 +1677,7 @@ paths:
         description: A UUID string identifying this carehome managers.
         required: true
       tags:
-      - carehome-managers
+      - Care Home Managers
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -1383,6 +1688,14 @@ paths:
   /api/carehomes/:
     get:
       operationId: carehomes_list
+      description: "\n        Retrieve a list of care homes based on the authenticated\
+        \ user's\n        role and permissions.\n\n        **Permission Levels:**\n\
+        \        - **Super Admin**: Access to all care homes in the system\n     \
+        \   - **Admin**: Access to care homes they directly manage\n        - **Manager**:\
+        \ Access to care homes they are assigned to manage\n        - **Other users**:\
+        \ No access (empty list)\n\n        The list is automatically filtered based\
+        \ on the user's role and\n        associated care homes.\n        "
+      summary: List Care Homes
       parameters:
       - name: limit
         required: false
@@ -1397,7 +1710,7 @@ paths:
         schema:
           type: integer
       tags:
-      - carehomes
+      - Care Homes
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -1408,16 +1721,47 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedCareHomeList'
+              examples:
+                CareHomeExample:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - id: 550e8400-e29b-41d4-a716-446655440000
+                      name: Sunshine Care Home
+                      code: SUN123
+                      address: 123 Main Street, Cityville, State 12345
+                      admin: http://example.com/api/users/1/
+                  summary: Complete care home data
+                  description: Example of a care home with all required fields
           description: ''
     post:
       operationId: carehomes_create
+      description: "\n        Create a new care home in the system.\n        \n  \
+        \      **Validation Rules:**\n        - Care home name and address combination\
+        \ must be unique\n        - A unique care home code will be automatically\
+        \ generated\n        \n        **Required Fields:**\n        - name: Name\
+        \ of the care home\n        - address: Physical address of the care home\n\
+        \        - admin: Admin user responsible for the care home\n        "
+      summary: Create Care Home
       tags:
-      - carehomes
+      - Care Homes
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CareHomeRequest'
+            examples:
+              CareHomeExample:
+                value:
+                  id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Sunshine Care Home
+                  code: SUN123
+                  address: 123 Main Street, Cityville, State 12345
+                  admin: http://example.com/api/users/1/
+                summary: Complete care home data
+                description: Example of a care home with all required fields
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/CareHomeRequest'
@@ -1435,10 +1779,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CareHome'
+              examples:
+                CareHomeExample:
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    name: Sunshine Care Home
+                    code: SUN123
+                    address: 123 Main Street, Cityville, State 12345
+                    admin: http://example.com/api/users/1/
+                  summary: Complete care home data
+                  description: Example of a care home with all required fields
           description: ''
   /api/carehomes/{id}/:
     get:
       operationId: carehomes_retrieve
+      description: Retrieve detailed information about a specific care home.
+      summary: Get Care Home Details
       parameters:
       - in: path
         name: id
@@ -1448,7 +1804,7 @@ paths:
         description: A UUID string identifying this care homes.
         required: true
       tags:
-      - carehomes
+      - Care Homes
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -1459,9 +1815,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CareHome'
+              examples:
+                CareHomeExample:
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    name: Sunshine Care Home
+                    code: SUN123
+                    address: 123 Main Street, Cityville, State 12345
+                    admin: http://example.com/api/users/1/
+                  summary: Complete care home data
+                  description: Example of a care home with all required fields
           description: ''
     put:
       operationId: carehomes_update
+      description: "\n        Update all fields of a care home.\n\n        **Note:**\
+        \ The care home code is auto-generated and cannot be\n        manually updated.\n\
+        \        "
+      summary: Update Care Home
       parameters:
       - in: path
         name: id
@@ -1471,12 +1841,22 @@ paths:
         description: A UUID string identifying this care homes.
         required: true
       tags:
-      - carehomes
+      - Care Homes
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/CareHomeRequest'
+            examples:
+              CareHomeExample:
+                value:
+                  id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Sunshine Care Home
+                  code: SUN123
+                  address: 123 Main Street, Cityville, State 12345
+                  admin: http://example.com/api/users/1/
+                summary: Complete care home data
+                description: Example of a care home with all required fields
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/CareHomeRequest'
@@ -1494,9 +1874,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CareHome'
+              examples:
+                CareHomeExample:
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    name: Sunshine Care Home
+                    code: SUN123
+                    address: 123 Main Street, Cityville, State 12345
+                    admin: http://example.com/api/users/1/
+                  summary: Complete care home data
+                  description: Example of a care home with all required fields
           description: ''
     patch:
       operationId: carehomes_partial_update
+      description: "\n        Update specific fields of a care home.\n\n        **Note:**\
+        \ The care home code is auto-generated and cannot be\n        manually updated.\n\
+        \        "
+      summary: Partially Update Care Home
       parameters:
       - in: path
         name: id
@@ -1506,12 +1900,22 @@ paths:
         description: A UUID string identifying this care homes.
         required: true
       tags:
-      - carehomes
+      - Care Homes
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchedCareHomeRequest'
+            examples:
+              CareHomeExample:
+                value:
+                  id: 550e8400-e29b-41d4-a716-446655440000
+                  name: Sunshine Care Home
+                  code: SUN123
+                  address: 123 Main Street, Cityville, State 12345
+                  admin: http://example.com/api/users/1/
+                summary: Complete care home data
+                description: Example of a care home with all required fields
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/PatchedCareHomeRequest'
@@ -1528,9 +1932,23 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/CareHome'
+              examples:
+                CareHomeExample:
+                  value:
+                    id: 550e8400-e29b-41d4-a716-446655440000
+                    name: Sunshine Care Home
+                    code: SUN123
+                    address: 123 Main Street, Cityville, State 12345
+                    admin: http://example.com/api/users/1/
+                  summary: Complete care home data
+                  description: Example of a care home with all required fields
           description: ''
     delete:
       operationId: carehomes_destroy
+      description: "\n        Delete a care home from the system.\n\n        **Warning:**\
+        \ This action is irreversible and will also remove all\n        associated\
+        \ data.\n        "
+      summary: Delete Care Home
       parameters:
       - in: path
         name: id
@@ -1540,7 +1958,7 @@ paths:
         description: A UUID string identifying this care homes.
         required: true
       tags:
-      - carehomes
+      - Care Homes
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -1551,7 +1969,27 @@ paths:
   /api/feedbacks/:
     get:
       operationId: feedbacks_list
+      description: |-
+        Retrieve a list of VR therapy session feedbacks with role-based filtering:
+
+        - **SuperAdmin**: Access to all feedbacks across all residents
+        - **Admin**: Access to feedbacks for residents in their care homes
+        - **Manager**: Access to feedbacks for residents in care homes they manage
+
+        Supports filtering by resident, date range, and pagination.
+      summary: List therapy session feedbacks
       parameters:
+      - in: query
+        name: end_date
+        schema:
+          type: string
+          format: date
+        description: Filter feedbacks up to this date
+        examples:
+          EndDate:
+            value: '2024-09-30'
+            summary: End Date
+            description: Show feedbacks up to September 30th, 2024
       - name: limit
         required: false
         in: query
@@ -1564,8 +2002,30 @@ paths:
         description: The initial index from which to return the results.
         schema:
           type: integer
+      - in: query
+        name: resident
+        schema:
+          type: string
+          format: uuid
+        description: Filter feedbacks by resident UUID
+        examples:
+          ResidentFilter:
+            value: 123e4567-e89b-12d3-a456-426614174000
+            summary: Resident Filter
+            description: Show feedbacks for specific resident
+      - in: query
+        name: start_date
+        schema:
+          type: string
+          format: date
+        description: Filter feedbacks from this date onwards
+        examples:
+          StartDate:
+            value: '2024-09-01'
+            summary: Start Date
+            description: Show feedbacks from September 1st, 2024
       tags:
-      - feedbacks
+      - Feedbacks
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -1576,16 +2036,72 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedFeedbackList'
+              examples:
+                FeedbackListResponse:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - count: 15
+                      next: http://127.0.0.1:8000/api/feedbacks/?page=2
+                      previous: null
+                      results:
+                      - id: 123e4567-e89b-12d3-a456-426614174000
+                        resident: 456e7890-e89b-12d3-a456-426614174001
+                        session_date: '2024-09-02'
+                        session_duration: 45
+                        vr_experience: Virtual beach walk experience
+                        engagement_level: 4
+                        satisfaction: 5
+                        physical_impact: 3
+                        cognitive_impact: 4
+                        emotional_response: Calm and relaxed response
+                        feedback_notes: Excellent session
+                        created_at: '2024-09-02T14:30:00Z'
+                  summary: Feedback List Response
+                  description: Sample response showing therapy session feedbacks
           description: ''
     post:
       operationId: feedbacks_create
+      description: |-
+        Record feedback for a VR therapy session.
+
+        **Permission Requirements:**
+        - User must have access to the resident's care home
+        - All rating fields must be between 1-5
+
+        **Required Fields:**
+        - resident: Must be a valid resident UUID
+        - session_date: Date of the therapy session
+        - session_duration: Duration in minutes
+        - All rating fields (engagement_level, satisfaction, etc.)
+        - VR experience description and emotional response
+      summary: Create therapy session feedback
       tags:
-      - feedbacks
+      - Feedbacks
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/FeedbackRequest'
+            examples:
+              CreateFeedbackRequest:
+                value:
+                  resident: 456e7890-e89b-12d3-a456-426614174001
+                  session_date: '2024-09-02'
+                  session_duration: 30
+                  vr_experience: Virtual garden tour with interactive elements
+                  engagement_level: 4
+                  satisfaction: 4
+                  physical_impact: 3
+                  cognitive_impact: 4
+                  emotional_response: Positive response, resident seemed engaged and
+                    calm
+                  feedback_notes: Good session, resident responded well
+                summary: Data required to create feedback
+                description: Essential feedback data for recording therapy session
+                  outcomes and resident responses
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/FeedbackRequest'
@@ -1603,10 +2119,38 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Feedback'
+              examples:
+                FeedbackExample:
+                  value:
+                    id: 123e4567-e89b-12d3-a456-426614174000
+                    resident: 456e7890-e89b-12d3-a456-426614174001
+                    session_date: '2024-09-02'
+                    session_duration: 45
+                    vr_experience: Resident participated in a virtual beach walk experience.
+                      They seemed calm and engaged throughout the session, occasionally
+                      commenting on the beautiful scenery.
+                    engagement_level: 4
+                    satisfaction: 5
+                    physical_impact: 3
+                    cognitive_impact: 4
+                    emotional_response: The resident smiled frequently during the
+                      session and expressed feeling relaxed and happy afterward. They
+                      mentioned it reminded them of holidays by the sea.
+                    feedback_notes: Excellent session. Resident was very responsive
+                      and calm. Recommend continuing with nature-based experiences.
+                    created_at: '2024-09-02T14:30:00Z'
+                  summary: Complete feedback session data
+                  description: Sample feedback data showing all fields with realistic
+                    therapy session information
           description: ''
   /api/feedbacks/{id}/:
     get:
       operationId: feedbacks_retrieve
+      description: |-
+        Retrieve detailed information about a specific therapy session feedback.
+
+        Access is restricted based on user permissions to the resident's care home.
+      summary: Get feedback details
       parameters:
       - in: path
         name: id
@@ -1616,7 +2160,7 @@ paths:
         description: A UUID string identifying this feedback.
         required: true
       tags:
-      - feedbacks
+      - Feedbacks
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -1627,9 +2171,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Feedback'
+              examples:
+                FeedbackExample:
+                  value:
+                    id: 123e4567-e89b-12d3-a456-426614174000
+                    resident: 456e7890-e89b-12d3-a456-426614174001
+                    session_date: '2024-09-02'
+                    session_duration: 45
+                    vr_experience: Resident participated in a virtual beach walk experience.
+                      They seemed calm and engaged throughout the session, occasionally
+                      commenting on the beautiful scenery.
+                    engagement_level: 4
+                    satisfaction: 5
+                    physical_impact: 3
+                    cognitive_impact: 4
+                    emotional_response: The resident smiled frequently during the
+                      session and expressed feeling relaxed and happy afterward. They
+                      mentioned it reminded them of holidays by the sea.
+                    feedback_notes: Excellent session. Resident was very responsive
+                      and calm. Recommend continuing with nature-based experiences.
+                    created_at: '2024-09-02T14:30:00Z'
+                  summary: Complete feedback session data
+                  description: Sample feedback data showing all fields with realistic
+                    therapy session information
           description: ''
     put:
       operationId: feedbacks_update
+      description: |-
+        Update all fields of a therapy session feedback.
+
+        **Restrictions:**
+        - User must have access to the resident's care home
+        - All rating fields must remain between 1-5
+        - Session date cannot be in the future
+      summary: Update feedback
       parameters:
       - in: path
         name: id
@@ -1639,12 +2214,29 @@ paths:
         description: A UUID string identifying this feedback.
         required: true
       tags:
-      - feedbacks
+      - Feedbacks
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/FeedbackRequest'
+            examples:
+              CreateFeedbackRequest:
+                value:
+                  resident: 456e7890-e89b-12d3-a456-426614174001
+                  session_date: '2024-09-02'
+                  session_duration: 30
+                  vr_experience: Virtual garden tour with interactive elements
+                  engagement_level: 4
+                  satisfaction: 4
+                  physical_impact: 3
+                  cognitive_impact: 4
+                  emotional_response: Positive response, resident seemed engaged and
+                    calm
+                  feedback_notes: Good session, resident responded well
+                summary: Data required to create feedback
+                description: Essential feedback data for recording therapy session
+                  outcomes and resident responses
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/FeedbackRequest'
@@ -1662,9 +2254,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Feedback'
+              examples:
+                FeedbackExample:
+                  value:
+                    id: 123e4567-e89b-12d3-a456-426614174000
+                    resident: 456e7890-e89b-12d3-a456-426614174001
+                    session_date: '2024-09-02'
+                    session_duration: 45
+                    vr_experience: Resident participated in a virtual beach walk experience.
+                      They seemed calm and engaged throughout the session, occasionally
+                      commenting on the beautiful scenery.
+                    engagement_level: 4
+                    satisfaction: 5
+                    physical_impact: 3
+                    cognitive_impact: 4
+                    emotional_response: The resident smiled frequently during the
+                      session and expressed feeling relaxed and happy afterward. They
+                      mentioned it reminded them of holidays by the sea.
+                    feedback_notes: Excellent session. Resident was very responsive
+                      and calm. Recommend continuing with nature-based experiences.
+                    created_at: '2024-09-02T14:30:00Z'
+                  summary: Complete feedback session data
+                  description: Sample feedback data showing all fields with realistic
+                    therapy session information
           description: ''
     patch:
       operationId: feedbacks_partial_update
+      description: |-
+        Update specific fields of a therapy session feedback.
+
+        **Restrictions:**
+        - User must have access to the resident's care home
+        - Rating fields must be between 1-5 if provided
+      summary: Partially update feedback
       parameters:
       - in: path
         name: id
@@ -1674,12 +2296,29 @@ paths:
         description: A UUID string identifying this feedback.
         required: true
       tags:
-      - feedbacks
+      - Feedbacks
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchedFeedbackRequest'
+            examples:
+              CreateFeedbackRequest:
+                value:
+                  resident: 456e7890-e89b-12d3-a456-426614174001
+                  session_date: '2024-09-02'
+                  session_duration: 30
+                  vr_experience: Virtual garden tour with interactive elements
+                  engagement_level: 4
+                  satisfaction: 4
+                  physical_impact: 3
+                  cognitive_impact: 4
+                  emotional_response: Positive response, resident seemed engaged and
+                    calm
+                  feedback_notes: Good session, resident responded well
+                summary: Data required to create feedback
+                description: Essential feedback data for recording therapy session
+                  outcomes and resident responses
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/PatchedFeedbackRequest'
@@ -1696,9 +2335,40 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Feedback'
+              examples:
+                FeedbackExample:
+                  value:
+                    id: 123e4567-e89b-12d3-a456-426614174000
+                    resident: 456e7890-e89b-12d3-a456-426614174001
+                    session_date: '2024-09-02'
+                    session_duration: 45
+                    vr_experience: Resident participated in a virtual beach walk experience.
+                      They seemed calm and engaged throughout the session, occasionally
+                      commenting on the beautiful scenery.
+                    engagement_level: 4
+                    satisfaction: 5
+                    physical_impact: 3
+                    cognitive_impact: 4
+                    emotional_response: The resident smiled frequently during the
+                      session and expressed feeling relaxed and happy afterward. They
+                      mentioned it reminded them of holidays by the sea.
+                    feedback_notes: Excellent session. Resident was very responsive
+                      and calm. Recommend continuing with nature-based experiences.
+                    created_at: '2024-09-02T14:30:00Z'
+                  summary: Complete feedback session data
+                  description: Sample feedback data showing all fields with realistic
+                    therapy session information
           description: ''
     delete:
       operationId: feedbacks_destroy
+      description: |-
+        Remove a therapy session feedback from the system.
+
+        **Warning:** This action cannot be undone. Consider the impact on therapy session history and reporting.
+
+        **Restrictions:**
+        - User must have access to the resident's care home
+      summary: Delete feedback
       parameters:
       - in: path
         name: id
@@ -1708,7 +2378,7 @@ paths:
         description: A UUID string identifying this feedback.
         required: true
       tags:
-      - feedbacks
+      - Feedbacks
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -1719,12 +2389,27 @@ paths:
   /api/reports/:
     get:
       operationId: reports_list
+      description: |-
+        Retrieve a list of monthly therapy reports with role-based filtering:
+
+        - **SuperAdmin**: Access to all reports across all residents
+        - **Admin**: Access to reports for residents in their care homes
+        - **Manager**: Access to reports for residents in care homes they manage
+
+        Supports filtering by resident, date range, and ordering by report month.
+      summary: List monthly therapy reports
       parameters:
       - in: query
         name: end_date
         schema:
           type: string
           format: date
+        description: Filter reports up to this month (YYYY-MM-DD, day will be ignored)
+        examples:
+          EndDate:
+            value: '2024-12-31'
+            summary: End Date
+            description: Show reports up to December 2024
       - name: limit
         required: false
         in: query
@@ -1737,24 +2422,45 @@ paths:
         description: The initial index from which to return the results.
         schema:
           type: integer
-      - name: ordering
-        required: false
-        in: query
-        description: Which field to use when ordering the results.
+      - in: query
+        name: ordering
         schema:
           type: string
+        description: Order results by field (prefix with - for desc)
+        examples:
+          OrderByMonth:
+            value: -report_month
+            summary: Order by Month
+            description: Order by report month (newest first)
+          OrderByResident:
+            value: resident
+            summary: Order by Resident
+            description: Order by resident name
       - in: query
         name: resident
         schema:
           type: string
           format: uuid
+        description: Filter reports by resident UUID
+        examples:
+          ResidentFilter:
+            value: 123e4567-e89b-12d3-a456-426614174000
+            summary: Resident Filter
+            description: Show reports for specific resident
       - in: query
         name: start_date
         schema:
           type: string
           format: date
+        description: Filter reports from this month onwards (YYYY-MM-DD, day will
+          be ignored)
+        examples:
+          StartDate:
+            value: '2024-09-01'
+            summary: Start Date
+            description: Show reports from September 2024 onwards
       tags:
-      - reports
+      - Reports
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -1765,16 +2471,63 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedReportsList'
+              examples:
+                ReportsListResponse:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - count: 8
+                      next: null
+                      previous: null
+                      results:
+                      - id: 123e4567-e89b-12d3-a456-426614174000
+                        url: http://127.0.0.1:8000/api/reports/123e4567-e89b-12d3-a456-426614174000/
+                        report_month: '2024-09-01'
+                        resident: http://127.0.0.1:8000/api/residents/456e789-e89b-12d3-a456-426614174001/
+                        description: September therapy summary
+                        pdf: http://127.0.0.1:8000/media/uploads/reports/september_2024_report.pdf
+                  summary: Reports List Response
+                  description: Sample response showing monthly therapy reports
           description: ''
     post:
       operationId: reports_create
+      description: |-
+        Generate a new monthly therapy report for a resident.
+
+        **Permission Requirements:**
+        - User must have access to the resident's care home
+        - Report month must be valid and not in the future
+
+        **Required Fields:**
+        - resident: Must be a valid resident reference
+        - report_month: First day of the month (YYYY-MM-01)
+        - pdf: PDF file containing the detailed report
+
+        **Business Rules:**
+        - One report per resident per month
+        - PDF file size limit: 10MB
+        - Supported format: PDF only
+      summary: Create monthly therapy report
       tags:
-      - reports
+      - Reports
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ReportsRequest'
+            examples:
+              CreateReportRequest:
+                value:
+                  report_month: '2024-09-01'
+                  resident: http://127.0.0.1:8000/api/residents/456e7890-e89b-12d3-a456-426614174001/
+                  description: September therapy summary showing good progress in
+                    VR engagement and emotional response
+                  pdf: <file_upload>
+                summary: Data required to create a monthly report
+                description: Essential data for generating a monthly therapy report
+                  including resident reference and summary
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ReportsRequest'
@@ -1792,10 +2545,32 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Reports'
+              examples:
+                MonthlyReportExample:
+                  value:
+                    id: 123e4567-e89b-12d3-a456-426614174000
+                    url: http://127.0.0.1:8000/api/reports/123e4567-e89b-12d3-a456-426614174000/
+                    report_month: '2024-09-01'
+                    resident: http://127.0.0.1:8000/api/residents/456e7890-e89b-12d3-a456-426614174001/
+                    description: September 2024 therapy report for Eleanor Watson.
+                      This month showed significant improvement in engagement levels
+                      during VR sessions. The resident participated in 12 sessions
+                      with an average satisfaction score of 4.2/5. Notable progress
+                      in cognitive response and emotional well-being. Recommend continuing
+                      with nature-based VR experiences.
+                    pdf: http://127.0.0.1:8000/media/uploads/reports/september_2024_watson_report.pdf
+                  summary: Complete monthly therapy report
+                  description: Sample monthly report with resident information, description,
+                    and PDF file
           description: ''
   /api/reports/{id}/:
     get:
       operationId: reports_retrieve
+      description: |-
+        Retrieve detailed information about a specific monthly therapy report.
+
+        Includes direct download link to the PDF file. Access is restricted based on user permissions to the resident's care home.
+      summary: Get report details
       parameters:
       - in: path
         name: id
@@ -1805,7 +2580,7 @@ paths:
         description: A UUID string identifying this reports.
         required: true
       tags:
-      - reports
+      - Reports
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -1816,9 +2591,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Reports'
+              examples:
+                MonthlyReportExample:
+                  value:
+                    id: 123e4567-e89b-12d3-a456-426614174000
+                    url: http://127.0.0.1:8000/api/reports/123e4567-e89b-12d3-a456-426614174000/
+                    report_month: '2024-09-01'
+                    resident: http://127.0.0.1:8000/api/residents/456e7890-e89b-12d3-a456-426614174001/
+                    description: September 2024 therapy report for Eleanor Watson.
+                      This month showed significant improvement in engagement levels
+                      during VR sessions. The resident participated in 12 sessions
+                      with an average satisfaction score of 4.2/5. Notable progress
+                      in cognitive response and emotional well-being. Recommend continuing
+                      with nature-based VR experiences.
+                    pdf: http://127.0.0.1:8000/media/uploads/reports/september_2024_watson_report.pdf
+                  summary: Complete monthly therapy report
+                  description: Sample monthly report with resident information, description,
+                    and PDF file
           description: ''
     put:
       operationId: reports_update
+      description: |-
+        Update all fields of a monthly therapy report.
+
+        **Restrictions:**
+        - User must have access to the resident's care home
+        - Report month cannot be changed after creation
+        - PDF file must be valid if provided
+      summary: Update report
       parameters:
       - in: path
         name: id
@@ -1828,12 +2628,23 @@ paths:
         description: A UUID string identifying this reports.
         required: true
       tags:
-      - reports
+      - Reports
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/ReportsRequest'
+            examples:
+              CreateReportRequest:
+                value:
+                  report_month: '2024-09-01'
+                  resident: http://127.0.0.1:8000/api/residents/456e7890-e89b-12d3-a456-426614174001/
+                  description: September therapy summary showing good progress in
+                    VR engagement and emotional response
+                  pdf: <file_upload>
+                summary: Data required to create a monthly report
+                description: Essential data for generating a monthly therapy report
+                  including resident reference and summary
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ReportsRequest'
@@ -1851,9 +2662,36 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Reports'
+              examples:
+                MonthlyReportExample:
+                  value:
+                    id: 123e4567-e89b-12d3-a456-426614174000
+                    url: http://127.0.0.1:8000/api/reports/123e4567-e89b-12d3-a456-426614174000/
+                    report_month: '2024-09-01'
+                    resident: http://127.0.0.1:8000/api/residents/456e7890-e89b-12d3-a456-426614174001/
+                    description: September 2024 therapy report for Eleanor Watson.
+                      This month showed significant improvement in engagement levels
+                      during VR sessions. The resident participated in 12 sessions
+                      with an average satisfaction score of 4.2/5. Notable progress
+                      in cognitive response and emotional well-being. Recommend continuing
+                      with nature-based VR experiences.
+                    pdf: http://127.0.0.1:8000/media/uploads/reports/september_2024_watson_report.pdf
+                  summary: Complete monthly therapy report
+                  description: Sample monthly report with resident information, description,
+                    and PDF file
           description: ''
     patch:
       operationId: reports_partial_update
+      description: |-
+        Update specific fields of a monthly therapy report.
+
+        **Common Use Cases:**
+        - Update description with additional insights
+        - Replace PDF file with updated version
+
+        **Restrictions:**
+        - User must have access to the resident's care home
+      summary: Partially update report
       parameters:
       - in: path
         name: id
@@ -1863,12 +2701,23 @@ paths:
         description: A UUID string identifying this reports.
         required: true
       tags:
-      - reports
+      - Reports
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchedReportsRequest'
+            examples:
+              CreateReportRequest:
+                value:
+                  report_month: '2024-09-01'
+                  resident: http://127.0.0.1:8000/api/residents/456e7890-e89b-12d3-a456-426614174001/
+                  description: September therapy summary showing good progress in
+                    VR engagement and emotional response
+                  pdf: <file_upload>
+                summary: Data required to create a monthly report
+                description: Essential data for generating a monthly therapy report
+                  including resident reference and summary
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/PatchedReportsRequest'
@@ -1885,9 +2734,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Reports'
+              examples:
+                MonthlyReportExample:
+                  value:
+                    id: 123e4567-e89b-12d3-a456-426614174000
+                    url: http://127.0.0.1:8000/api/reports/123e4567-e89b-12d3-a456-426614174000/
+                    report_month: '2024-09-01'
+                    resident: http://127.0.0.1:8000/api/residents/456e7890-e89b-12d3-a456-426614174001/
+                    description: September 2024 therapy report for Eleanor Watson.
+                      This month showed significant improvement in engagement levels
+                      during VR sessions. The resident participated in 12 sessions
+                      with an average satisfaction score of 4.2/5. Notable progress
+                      in cognitive response and emotional well-being. Recommend continuing
+                      with nature-based VR experiences.
+                    pdf: http://127.0.0.1:8000/media/uploads/reports/september_2024_watson_report.pdf
+                  summary: Complete monthly therapy report
+                  description: Sample monthly report with resident information, description,
+                    and PDF file
           description: ''
     delete:
       operationId: reports_destroy
+      description: |-
+        Remove a monthly therapy report from the system.
+
+        **Warning:** This action cannot be undone and will permanently delete the associated PDF file.
+
+        **Restrictions:**
+        - User must have access to the resident's care home
+        - Consider backup requirements before deletion
+      summary: Delete report
       parameters:
       - in: path
         name: id
@@ -1897,7 +2772,7 @@ paths:
         description: A UUID string identifying this reports.
         required: true
       tags:
-      - reports
+      - Reports
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -1908,8 +2783,14 @@ paths:
   /api/residents/:
     get:
       operationId: residents_list
-      description: Retrieve a list of residents. Results are filtered based on user
-        permissions.
+      description: |-
+        Retrieve a list of residents with role-based filtering:
+
+        - **SuperAdmin**: Access to all residents across all care homes
+        - **Admin**: Access to residents in their assigned care home only
+        - **Manager**: Access to residents in care homes they manage
+
+        Supports search by resident name using the 'search' parameter.
       summary: List residents
       parameters:
       - name: limit
@@ -1924,12 +2805,16 @@ paths:
         description: The initial index from which to return the results.
         schema:
           type: integer
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+      - in: query
+        name: search
         schema:
           type: string
+        description: Search residents by name (case-insensitive)
+        examples:
+          SearchExample:
+            value: Eleanor
+            summary: Search Example
+            description: Search for residents with "Eleanor" in name
       tags:
       - Residents
       security:
@@ -1942,10 +2827,41 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedResidentList'
+              examples:
+                ResidentListResponse:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - count: 25
+                      next: http://127.0.0.1:8000/api/residents/?page=2
+                      previous: null
+                      results:
+                      - url: http://127.0.0.1:8000/api/residents/123e4567-e89b-12d3-a456-426614174000/
+                        id: 123e4567-e89b-12d3-a456-426614174000
+                        name: Eleanor Watson
+                        date_of_birth: '1938-06-15'
+                        care_home:
+                          name: Sunrise Manor Care Home
+                        created_by: http://127.0.0.1:8000/api/users/456e789-e89b-12d3-a456-426614174000/
+                  summary: Resident List Response
+                  description: Sample response showing residents list
           description: ''
     post:
       operationId: residents_create
-      description: Create a new resident in the care home system.
+      description: |-
+        Create a new resident in the care home system.
+
+        **Permission Requirements:**
+        - Admin: Can create residents in their assigned care home
+        - Manager: Can create residents in care homes they manage
+        - SuperAdmin: Can create residents (care home auto-assigned)
+
+        **Business Rules:**
+        - Care home is automatically assigned based on user role
+        - User must have an assigned care home to create residents
+        - Date of birth must be in the past
       summary: Create new resident
       tags:
       - Residents
@@ -1954,6 +2870,14 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/ResidentCreateRequest'
+            examples:
+              CreateResidentRequest:
+                value:
+                  name: Margaret Thompson
+                  date_of_birth: '1942-03-22'
+                summary: Data required to create a new resident
+                description: Minimal data required for creating a resident. Care home
+                  assignment is automatic.
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/ResidentCreateRequest'
@@ -1970,12 +2894,29 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ResidentCreate'
+                $ref: '#/components/schemas/Resident'
+              examples:
+                ResidentExample:
+                  value:
+                    url: http://127.0.0.1:8000/api/residents/123e4567-e89b-12d3-a456-426614174000/
+                    id: 123e4567-e89b-12d3-a456-426614174000
+                    name: Eleanor Watson
+                    date_of_birth: '1938-06-15'
+                    care_home:
+                      name: Sunrise Manor Care Home
+                    created_by: http://127.0.0.1:8000/api/users/456e7890-e89b-12d3-a456-426614174000/
+                  summary: Sample resident data
+                  description: Complete resident information with care home and creator
+                    details
           description: ''
   /api/residents/{id}/:
     get:
       operationId: residents_retrieve
-      description: Retrieve detailed information about a specific resident.
+      description: |-
+        Retrieve detailed information about a specific resident.
+
+        Access is restricted based on user permissions:
+        - User must have access to the resident's care home
       summary: Get resident details
       parameters:
       - in: path
@@ -1997,10 +2938,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Resident'
+              examples:
+                ResidentExample:
+                  value:
+                    url: http://127.0.0.1:8000/api/residents/123e4567-e89b-12d3-a456-426614174000/
+                    id: 123e4567-e89b-12d3-a456-426614174000
+                    name: Eleanor Watson
+                    date_of_birth: '1938-06-15'
+                    care_home:
+                      name: Sunrise Manor Care Home
+                    created_by: http://127.0.0.1:8000/api/users/456e7890-e89b-12d3-a456-426614174000/
+                  summary: Sample resident data
+                  description: Complete resident information with care home and creator
+                    details
           description: ''
     put:
       operationId: residents_update
-      description: Update all fields of a resident.
+      description: |-
+        Update all fields of a resident.
+
+        **Restrictions:**
+        - Care home cannot be changed through this endpoint
+        - User must have access to the resident's care home
+        - Date of birth must be valid
       summary: Update resident
       parameters:
       - in: path
@@ -2034,10 +2994,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Resident'
+              examples:
+                ResidentExample:
+                  value:
+                    url: http://127.0.0.1:8000/api/residents/123e4567-e89b-12d3-a456-426614174000/
+                    id: 123e4567-e89b-12d3-a456-426614174000
+                    name: Eleanor Watson
+                    date_of_birth: '1938-06-15'
+                    care_home:
+                      name: Sunrise Manor Care Home
+                    created_by: http://127.0.0.1:8000/api/users/456e7890-e89b-12d3-a456-426614174000/
+                  summary: Sample resident data
+                  description: Complete resident information with care home and creator
+                    details
           description: ''
     patch:
       operationId: residents_partial_update
-      description: Update specific fields of a resident.
+      description: |-
+        Update specific fields of a resident.
+
+        **Restrictions:**
+        - Care home cannot be changed
+        - User must have access to the resident's care home
       summary: Partially update resident
       parameters:
       - in: path
@@ -2070,10 +3048,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Resident'
+              examples:
+                ResidentExample:
+                  value:
+                    url: http://127.0.0.1:8000/api/residents/123e4567-e89b-12d3-a456-426614174000/
+                    id: 123e4567-e89b-12d3-a456-426614174000
+                    name: Eleanor Watson
+                    date_of_birth: '1938-06-15'
+                    care_home:
+                      name: Sunrise Manor Care Home
+                    created_by: http://127.0.0.1:8000/api/users/456e7890-e89b-12d3-a456-426614174000/
+                  summary: Sample resident data
+                  description: Complete resident information with care home and creator
+                    details
           description: ''
     delete:
       operationId: residents_destroy
-      description: Remove a resident from the system.
+      description: |-
+        Remove a resident from the system.
+
+        **Warning:** This action cannot be undone. All associated therapy sessions, feedbacks, and reports will be affected.
+
+        **Restrictions:**
+        - User must have access to the resident's care home
+        - Consider the impact on related data before deletion
       summary: Delete resident
       parameters:
       - in: path
@@ -2095,7 +3093,33 @@ paths:
   /api/sessions/:
     get:
       operationId: sessions_list
+      description: |-
+        Retrieve a list of therapy sessions with comprehensive filtering and search capabilities.
+
+        Available Filters:
+        - Status-based filtering (completed, scheduled, in_progress, cancelled)
+        - Category filtering (upcoming, past_due, today)
+        - Feedback status filtering (completed, pending)
+        - Resident-specific filtering
+        - Search by resident name or session notes
+
+        Ordering Options:
+        - scheduled_date, created_at, updated_at
+      summary: List therapy sessions
       parameters:
+      - in: query
+        name: feedback_status
+        schema:
+          type: string
+          enum:
+          - completed
+          - pending
+        description: Filter by feedback completion status
+        examples:
+          PendingFeedback:
+            value: pending
+            summary: Pending Feedback
+            description: Completed sessions without feedback
       - name: limit
         required: false
         in: query
@@ -2108,23 +3132,37 @@ paths:
         description: The initial index from which to return the results.
         schema:
           type: integer
-      - name: ordering
-        required: false
-        in: query
-        description: Which field to use when ordering the results.
+      - in: query
+        name: ordering
         schema:
           type: string
+        description: Order results by field (prefix with - for desc)
+        examples:
+          OrderByDate:
+            value: -scheduled_date
+            summary: Order by Date
+            description: Order by scheduled date (newest first)
       - in: query
         name: resident
         schema:
           type: string
           format: uuid
-      - name: search
-        required: false
-        in: query
-        description: A search term.
+        description: Filter sessions by resident UUID
+        examples:
+          ResidentFilter:
+            value: 123e4567-e89b-12d3-a456-426614174000
+            summary: Resident Filter
+            description: Show sessions for specific resident
+      - in: query
+        name: search
         schema:
           type: string
+        description: Search in resident names and session notes
+        examples:
+          SearchExample:
+            value: relaxation
+            summary: Search Example
+            description: Search for sessions with "relaxation"
       - in: query
         name: status
         schema:
@@ -2134,13 +3172,38 @@ paths:
           - completed
           - in_progress
           - scheduled
-        description: |-
-          * `scheduled` - Scheduled
-          * `in_progress` - In Progress
-          * `completed` - Completed
-          * `cancelled` - Cancelled
+        description: Filter by session status
+        examples:
+          CompletedSessions:
+            value: completed
+            summary: Completed Sessions
+            description: Show only completed sessions
+          ScheduledSessions:
+            value: scheduled
+            summary: Scheduled Sessions
+            description: Show only scheduled sessions
+      - in: query
+        name: status_category
+        schema:
+          type: string
+          enum:
+          - completed
+          - in_progress
+          - past_due
+          - today
+          - upcoming
+        description: Filter by session category
+        examples:
+          UpcomingSessions:
+            value: upcoming
+            summary: Upcoming Sessions
+            description: Future scheduled sessions
+          TodaySessions:
+            value: today
+            summary: Today Sessions
+            description: Sessions scheduled for today
       tags:
-      - sessions
+      - Therapy Sessions
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -2151,16 +3214,72 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/PaginatedSessionList'
+              examples:
+                SessionsListResponse:
+                  value:
+                    count: 123
+                    next: http://api.example.org/accounts/?offset=400&limit=100
+                    previous: http://api.example.org/accounts/?offset=200&limit=100
+                    results:
+                    - count: 12
+                      next: null
+                      previous: null
+                      results:
+                      - id: 123e4567-e89b-12d3-a456-426614174000
+                        title: Morning VR Relaxation Session
+                        description: Calming virtual environment session
+                        resident: 456e7890-e89b-12d3-a456-426614174001
+                        scheduled_date: '2024-09-03T10:00:00Z'
+                        duration: 30
+                        status: completed
+                        feedback_status: Completed
+                  summary: Sessions List Response
+                  description: Sample response showing therapy sessions
           description: ''
     post:
       operationId: sessions_create
+      description: |-
+        Create a new therapy session for a resident.
+
+        Required Information:
+        - title: Descriptive session name
+        - resident: Resident UUID reference
+        - scheduled_date: Session timing
+        - duration: Session length in minutes
+
+        Business Rules:
+        - Sessions are created with 'scheduled' status by default
+        - Scheduled time must be in the future
+        - Duration must be between 15-120 minutes
+        - User must have access to the resident's care home
+      summary: Schedule new therapy session
       tags:
-      - sessions
+      - Therapy Sessions
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/SessionCreateUpdateRequest'
+            examples:
+              CreateTherapySession:
+                value:
+                  title: Morning VR Relaxation Session
+                  description: Calming virtual environment session focusing on stress
+                    reduction and emotional well-being
+                  resident: 456e7890-e89b-12d3-a456-426614174001
+                  scheduled_date: '2024-09-04T10:00:00Z'
+                  duration: 30
+                  status: scheduled
+                  notes: First session of the week, focus on relaxation
+                summary: Data required to schedule a therapy session
+                description: Essential information for creating a new therapy session
+                  including resident, timing, and session details
+              UpdateSessionStatus:
+                value:
+                  status: in_progress
+                  notes: Session started, resident responding well
+                summary: Update session to in-progress
+                description: Example of updating session status when therapy begins
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/SessionCreateUpdateRequest'
@@ -2177,11 +3296,44 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SessionCreateUpdate'
+                $ref: '#/components/schemas/Session'
+              examples:
+                CompleteTherapySession:
+                  value:
+                    id: 123e4567-e89b-12d3-a456-426614174000
+                    title: VR Nature Walk Therapy Session
+                    description: Guided virtual reality session through peaceful forest
+                      environment to promote relaxation and engagement
+                    resident: 456e7890-e89b-12d3-a456-426614174001
+                    resident_details:
+                      url: http://127.0.0.1:8000/api/residents/456e7890-e89b-12d3-a456-426614174001/
+                      id: 456e7890-e89b-12d3-a456-426614174001
+                      name: Eleanor Watson
+                      date_of_birth: '1938-06-15'
+                      care_home:
+                        name: Sunrise Manor Care Home
+                    scheduled_date: '2024-09-03T14:30:00Z'
+                    duration: 45
+                    status: completed
+                    notes: Session went very well. Resident was engaged and calm throughout.
+                      Showed positive emotional response to nature sounds and visuals.
+                    created_at: '2024-09-01T10:00:00Z'
+                    updated_at: '2024-09-03T15:15:00Z'
+                    end_time: '2024-09-03T15:15:00Z'
+                    feedback: 789e1234-e89b-12d3-a456-426614174002
+                    feedback_status: Completed
+                  summary: Detailed therapy session information
+                  description: Complete therapy session with resident details, status,
+                    and feedback information
           description: ''
   /api/sessions/{id}/:
     get:
       operationId: sessions_retrieve
+      description: |-
+        Retrieve detailed information about a specific therapy session.
+
+        Includes complete resident information, session status, feedback status, and all session metadata.
+      summary: Get therapy session details
       parameters:
       - in: path
         name: id
@@ -2190,7 +3342,7 @@ paths:
         description: A unique integer value identifying this therapy session.
         required: true
       tags:
-      - sessions
+      - Therapy Sessions
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -2201,9 +3353,49 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Session'
+              examples:
+                CompleteTherapySession:
+                  value:
+                    id: 123e4567-e89b-12d3-a456-426614174000
+                    title: VR Nature Walk Therapy Session
+                    description: Guided virtual reality session through peaceful forest
+                      environment to promote relaxation and engagement
+                    resident: 456e7890-e89b-12d3-a456-426614174001
+                    resident_details:
+                      url: http://127.0.0.1:8000/api/residents/456e7890-e89b-12d3-a456-426614174001/
+                      id: 456e7890-e89b-12d3-a456-426614174001
+                      name: Eleanor Watson
+                      date_of_birth: '1938-06-15'
+                      care_home:
+                        name: Sunrise Manor Care Home
+                    scheduled_date: '2024-09-03T14:30:00Z'
+                    duration: 45
+                    status: completed
+                    notes: Session went very well. Resident was engaged and calm throughout.
+                      Showed positive emotional response to nature sounds and visuals.
+                    created_at: '2024-09-01T10:00:00Z'
+                    updated_at: '2024-09-03T15:15:00Z'
+                    end_time: '2024-09-03T15:15:00Z'
+                    feedback: 789e1234-e89b-12d3-a456-426614174002
+                    feedback_status: Completed
+                  summary: Detailed therapy session information
+                  description: Complete therapy session with resident details, status,
+                    and feedback information
           description: ''
     put:
       operationId: sessions_update
+      description: |-
+        Update all fields of a therapy session.
+
+        Common Update Scenarios:
+        - Reschedule session timing
+        - Update session description or notes
+        - Modify session duration
+
+        Restrictions:
+        - Cannot update completed sessions
+        - User must have access to the resident's care home
+      summary: Update therapy session
       parameters:
       - in: path
         name: id
@@ -2212,12 +3404,32 @@ paths:
         description: A unique integer value identifying this therapy session.
         required: true
       tags:
-      - sessions
+      - Therapy Sessions
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/SessionCreateUpdateRequest'
+            examples:
+              CreateTherapySession:
+                value:
+                  title: Morning VR Relaxation Session
+                  description: Calming virtual environment session focusing on stress
+                    reduction and emotional well-being
+                  resident: 456e7890-e89b-12d3-a456-426614174001
+                  scheduled_date: '2024-09-04T10:00:00Z'
+                  duration: 30
+                  status: scheduled
+                  notes: First session of the week, focus on relaxation
+                summary: Data required to schedule a therapy session
+                description: Essential information for creating a new therapy session
+                  including resident, timing, and session details
+              UpdateSessionStatus:
+                value:
+                  status: in_progress
+                  notes: Session started, resident responding well
+                summary: Update session to in-progress
+                description: Example of updating session status when therapy begins
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/SessionCreateUpdateRequest'
@@ -2238,6 +3450,16 @@ paths:
           description: ''
     patch:
       operationId: sessions_partial_update
+      description: |-
+        Update specific fields of a therapy session.
+
+        Common Use Cases:
+        - Change session status
+        - Add session notes
+        - Update timing information
+
+        NOTE: Use specific action endpoints for status changes when available (mark_completed, mark_in_progress, etc.)
+      summary: Partially update therapy session
       parameters:
       - in: path
         name: id
@@ -2246,12 +3468,32 @@ paths:
         description: A unique integer value identifying this therapy session.
         required: true
       tags:
-      - sessions
+      - Therapy Sessions
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/PatchedSessionCreateUpdateRequest'
+            examples:
+              CreateTherapySession:
+                value:
+                  title: Morning VR Relaxation Session
+                  description: Calming virtual environment session focusing on stress
+                    reduction and emotional well-being
+                  resident: 456e7890-e89b-12d3-a456-426614174001
+                  scheduled_date: '2024-09-04T10:00:00Z'
+                  duration: 30
+                  status: scheduled
+                  notes: First session of the week, focus on relaxation
+                summary: Data required to schedule a therapy session
+                description: Essential information for creating a new therapy session
+                  including resident, timing, and session details
+              UpdateSessionStatus:
+                value:
+                  status: in_progress
+                  notes: Session started, resident responding well
+                summary: Update session to in-progress
+                description: Example of updating session status when therapy begins
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/PatchedSessionCreateUpdateRequest'
@@ -2271,6 +3513,18 @@ paths:
           description: ''
     delete:
       operationId: sessions_destroy
+      description: |-
+        Remove a therapy session from the system.
+
+        ⚠️ WARNING: This action cannot be undone and will affect:
+        - Associated video recordings
+        - Emotion analysis data
+        - Session feedback
+
+        Restrictions:
+        - Cannot delete completed sessions with feedback
+        - User must have access to the resident's care home
+      summary: Delete therapy session
       parameters:
       - in: path
         name: id
@@ -2279,7 +3533,7 @@ paths:
         description: A unique integer value identifying this therapy session.
         required: true
       tags:
-      - sessions
+      - Therapy Sessions
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -2290,6 +3544,19 @@ paths:
   /api/sessions/{id}/cancel_session/:
     post:
       operationId: sessions_cancel_session_create
+      description: |-
+        Cancel a scheduled or in-progress therapy session.
+
+        Use Cases:
+        - Resident unavailable for scheduled session
+        - Equipment issues preventing session
+        - Emergency cancellation needs
+
+        Business Rules:
+        - Cannot cancel completed sessions
+        - Cancellation reason should be noted in session notes
+        - User must have access to the resident's care home
+      summary: Cancel therapy session
       parameters:
       - in: path
         name: id
@@ -2298,19 +3565,7 @@ paths:
         description: A unique integer value identifying this therapy session.
         required: true
       tags:
-      - sessions
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SessionRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/SessionRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/SessionRequest'
-        required: true
+      - Therapy Sessions
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -2320,11 +3575,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
           description: ''
   /api/sessions/{id}/mark_completed/:
     post:
       operationId: sessions_mark_completed_create
+      description: |-
+        Mark a therapy session as completed and record end time.
+
+        Automatic Actions:
+        - Sets status to 'completed'
+        - Records current timestamp as end_time
+        - Enables feedback creation
+
+        Requirements:
+        - Session must be 'in_progress' or 'scheduled'
+        - User must have access to the resident's care home
+      summary: Mark session as completed
       parameters:
       - in: path
         name: id
@@ -2333,19 +3602,7 @@ paths:
         description: A unique integer value identifying this therapy session.
         required: true
       tags:
-      - sessions
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SessionRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/SessionRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/SessionRequest'
-        required: true
+      - Therapy Sessions
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -2355,11 +3612,25 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
           description: ''
   /api/sessions/{id}/mark_in_progress/:
     post:
       operationId: sessions_mark_in_progress_create
+      description: |-
+        Mark a therapy session as currently in progress.
+
+        Use Cases:
+        - Starting a scheduled session
+        - Resuming a paused session
+        - Indicating active therapy is occurring
+
+        Requirements:
+        - Session must be 'scheduled' status
+        - User must have access to the resident's care home
+      summary: Mark session as in progress
       parameters:
       - in: path
         name: id
@@ -2368,19 +3639,7 @@ paths:
         description: A unique integer value identifying this therapy session.
         required: true
       tags:
-      - sessions
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SessionRequest'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/SessionRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/SessionRequest'
-        required: true
+      - Therapy Sessions
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -2390,33 +3649,36 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Session'
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
           description: ''
-  /api/sessions/{session_pk}/analysis/emotions/:
+  /api/sessions/{id}/videos/:
     get:
-      operationId: sessions_analysis_emotions_list
-      description: View to list all videos associated with a therapy session along
-        with their analysis endpoints
+      operationId: sessions_videos_retrieve
+      description: |-
+        Retrieve all video recordings associated with this therapy session along with their emotion analysis endpoint URLs.
+
+        Response Includes:
+        - Complete video metadata
+        - Direct URLs to emotion analysis endpoints
+        - Frame-by-frame analysis access
+        - Timeline and summary analysis links
+
+        Analysis Endpoints Provided:
+        - frames: Individual frame emotion analysis
+        - timeline: Emotion progression over time
+        - summary: Overall session emotion summary
+      summary: Get session videos with analysis endpoints
       parameters:
-      - name: limit
-        required: false
-        in: query
-        description: Number of results to return per page.
-        schema:
-          type: integer
-      - name: offset
-        required: false
-        in: query
-        description: The initial index from which to return the results.
-        schema:
-          type: integer
       - in: path
-        name: session_pk
+        name: id
         schema:
           type: integer
+        description: A unique integer value identifying this therapy session.
         required: true
       tags:
-      - sessions
+      - Therapy Sessions
       security:
       - jwtHeaderAuth: []
       - jwtCookieAuth: []
@@ -2426,12 +3688,15 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PaginatedVideoList'
+                type: object
+                additionalProperties: {}
+                description: Unspecified response body
           description: ''
 components:
   schemas:
     CareHome:
       type: object
+      description: Basic care home information for manager assignments.
       properties:
         id:
           type: string
@@ -2452,6 +3717,7 @@ components:
       - name
     CareHomeRequest:
       type: object
+      description: Basic care home information for manager assignments.
       properties:
         name:
           type: string
@@ -2470,6 +3736,11 @@ components:
       - name
     CarehomeManager:
       type: object
+      description: |-
+        Serializer for care home manager assignments.
+
+        Shows the relationship between managers and care homes
+        with nested serialized data for both entities.
       properties:
         id:
           type: string
@@ -2485,6 +3756,11 @@ components:
       - manager
     CarehomeManagerRequest:
       type: object
+      description: |-
+        Serializer for care home manager assignments.
+
+        Shows the relationship between managers and care homes
+        with nested serialized data for both entities.
       properties:
         manager:
           $ref: '#/components/schemas/InterfaceUserRequest'
@@ -2495,25 +3771,39 @@ components:
       - manager
     CreateCarehomeManager:
       type: object
+      description: |-
+        Serializer for creating care home manager assignments.
+
+        Uses simple ID references for both care home and manager
+        to create the assignment relationship.
       properties:
         carehome_id:
           type: string
           format: uuid
+          description: UUID of the care home
         manager_id:
           type: string
           format: uuid
+          description: ID of the manager user
       required:
       - carehome_id
       - manager_id
     CreateCarehomeManagerRequest:
       type: object
+      description: |-
+        Serializer for creating care home manager assignments.
+
+        Uses simple ID references for both care home and manager
+        to create the assignment relationship.
       properties:
         carehome_id:
           type: string
           format: uuid
+          description: UUID of the care home
         manager_id:
           type: string
           format: uuid
+          description: ID of the manager user
       required:
       - carehome_id
       - manager_id
@@ -2569,44 +3859,26 @@ components:
           maxLength: 150
       required:
       - name
-    EmotionAnalysis:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-        video:
-          type: string
-          format: uuid
-        timestamp:
-          type: number
-          format: double
-          description: Timestamp in seconds from the start of the video
-        angry:
-          type: number
-          format: double
-        sad:
-          type: number
-          format: double
-        happy:
-          type: number
-          format: double
-        dominant_emotion:
-          type: string
-          readOnly: true
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - created_at
-      - dominant_emotion
-      - id
-      - timestamp
-      - video
     EmotionAnalysisSummary:
       type: object
+      description: |-
+        Comprehensive emotion analysis summary for entire video.
+
+        This serializer provides aggregate emotion analysis across the complete
+        video, offering insights into overall emotional patterns and therapeutic
+        outcomes. It includes both statistical averages and frame counts.
+
+        Summary metrics:
+        - Average emotion scores across all analyzed frames
+        - Total frame counts for each emotion type
+        - Overall dominant emotion determination
+        - Percentage distributions for detailed analysis
+
+        Clinical applications:
+        - Treatment effectiveness assessment
+        - Progress tracking over multiple sessions
+        - Comparative analysis between patients
+        - Therapy optimization insights
       properties:
         id:
           type: string
@@ -2642,49 +3914,21 @@ components:
       - id
       - updated_at
       - video
-    EmotionTimeline:
-      type: object
-      properties:
-        id:
-          type: string
-          format: uuid
-          readOnly: true
-        video:
-          type: string
-          format: uuid
-        start_time:
-          type: number
-          format: double
-          description: Start time in seconds from the start of the video
-        end_time:
-          type: number
-          format: double
-          description: End time in seconds from the start of the video
-        duration:
-          type: number
-          format: double
-          description: Duration of this emotion segment in seconds
-        dominant_emotion:
-          type: string
-          maxLength: 20
-        confidence:
-          type: number
-          format: double
-          description: Confidence score for this emotion segment
-        created_at:
-          type: string
-          format: date-time
-          readOnly: true
-      required:
-      - created_at
-      - dominant_emotion
-      - duration
-      - end_time
-      - id
-      - start_time
-      - video
     Feedback:
       type: object
+      description: |-
+        Serializer for therapy session feedback data.
+
+        Captures comprehensive feedback about VR therapy sessions including:
+        - Session details (date, duration, experience type)
+        - Resident response metrics (engagement, satisfaction, impact scores)
+        - Qualitative observations (emotional response, notes)
+
+        **Rating Scales:**
+        - engagement_level: 1-5 (1=Very Low, 5=Very High)
+        - satisfaction: 1-5 (1=Very Dissatisfied, 5=Very Satisfied)
+        - physical_impact: 1-5 (1=Negative, 3=Neutral, 5=Very Positive)
+        - cognitive_impact: 1-5 (1=Negative, 3=Neutral, 5=Very Positive)
       properties:
         id:
           type: string
@@ -2740,6 +3984,19 @@ components:
       - vr_experience
     FeedbackRequest:
       type: object
+      description: |-
+        Serializer for therapy session feedback data.
+
+        Captures comprehensive feedback about VR therapy sessions including:
+        - Session details (date, duration, experience type)
+        - Resident response metrics (engagement, satisfaction, impact scores)
+        - Qualitative observations (emotional response, notes)
+
+        **Rating Scales:**
+        - engagement_level: 1-5 (1=Very Low, 5=Very High)
+        - satisfaction: 1-5 (1=Very Dissatisfied, 5=Very Satisfied)
+        - physical_impact: 1-5 (1=Negative, 3=Neutral, 5=Very Positive)
+        - cognitive_impact: 1-5 (1=Negative, 3=Neutral, 5=Very Positive)
       properties:
         session_date:
           type: string
@@ -2951,75 +4208,6 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/CarehomeManager'
-    PaginatedEmotionAnalysisList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/EmotionAnalysis'
-    PaginatedEmotionAnalysisSummaryList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/EmotionAnalysisSummary'
-    PaginatedEmotionTimelineList:
-      type: object
-      required:
-      - count
-      - results
-      properties:
-        count:
-          type: integer
-          example: 123
-        next:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?offset=400&limit=100
-        previous:
-          type: string
-          nullable: true
-          format: uri
-          example: http://api.example.org/accounts/?offset=200&limit=100
-        results:
-          type: array
-          items:
-            $ref: '#/components/schemas/EmotionTimeline'
     PaginatedFeedbackList:
       type: object
       required:
@@ -3207,16 +4395,16 @@ components:
       - email
     PatchedCareHomeRequest:
       type: object
+      description: |-
+        Serializer for Care Home data.
+
+        Handles the serialization and validation of care home information
+        including automatic code generation upon creation.
       properties:
         name:
           type: string
           minLength: 1
           maxLength: 150
-        code:
-          type: string
-          nullable: true
-          minLength: 1
-          maxLength: 8
         address:
           type: string
           minLength: 1
@@ -3226,6 +4414,11 @@ components:
           nullable: true
     PatchedCarehomeManagerRequest:
       type: object
+      description: |-
+        Serializer for care home manager assignments.
+
+        Shows the relationship between managers and care homes
+        with nested serialized data for both entities.
       properties:
         manager:
           $ref: '#/components/schemas/InterfaceUserRequest'
@@ -3244,6 +4437,19 @@ components:
           maxLength: 150
     PatchedFeedbackRequest:
       type: object
+      description: |-
+        Serializer for therapy session feedback data.
+
+        Captures comprehensive feedback about VR therapy sessions including:
+        - Session details (date, duration, experience type)
+        - Resident response metrics (engagement, satisfaction, impact scores)
+        - Qualitative observations (emotional response, notes)
+
+        **Rating Scales:**
+        - engagement_level: 1-5 (1=Very Low, 5=Very High)
+        - satisfaction: 1-5 (1=Very Dissatisfied, 5=Very Satisfied)
+        - physical_impact: 1-5 (1=Negative, 3=Neutral, 5=Very Positive)
+        - cognitive_impact: 1-5 (1=Negative, 3=Neutral, 5=Very Positive)
       properties:
         session_date:
           type: string
@@ -3293,6 +4499,23 @@ components:
           maxLength: 254
     PatchedReportsRequest:
       type: object
+      description: |-
+        Serializer for monthly therapy reports.
+
+        Manages comprehensive monthly reports that summarize resident therapy
+        progress, session outcomes, and recommendations. Each report covers
+        a specific month and includes:
+
+        **Key Features:**
+        - Monthly therapy session summaries
+        - Progress tracking and analysis
+        - PDF report generation and storage
+        - Resident-specific insights and recommendations
+
+        **File Handling:**
+        - PDF files are uploaded to /media/uploads/reports/
+        - File size limits and format validation apply
+        - Direct download links provided in responses
       properties:
         report_month:
           type: string
@@ -3307,6 +4530,12 @@ components:
           format: binary
     PatchedResidentRequest:
       type: object
+      description: |-
+        Serializer for resident data with complete information including care home.
+
+        Used for retrieving and updating existing residents. The care_home is
+        read-only and automatically assigned based on the user's permissions
+        during creation.
       properties:
         name:
           type: string
@@ -3320,6 +4549,23 @@ components:
           format: uri
     PatchedSessionCreateUpdateRequest:
       type: object
+      description: |-
+        Serializer for creating and updating therapy sessions.
+
+        Used for scheduling new therapy sessions and updating existing ones.
+        Supports partial updates for status changes and note additions.
+
+        **Required Fields for Creation:**
+        - title: Descriptive name for the session
+        - resident: UUID reference to the resident
+        - scheduled_date: When the session is planned
+        - duration: Session length in minutes
+
+        **Common Update Scenarios:**
+        - Status changes (scheduled → in_progress → completed)
+        - Adding session notes
+        - Updating scheduled times
+        - Modifying session duration
       properties:
         scheduled_date:
           type: string
@@ -3342,6 +4588,18 @@ components:
           nullable: true
     PatchedVideoRequest:
       type: object
+      description: |-
+        Video serializer for handling therapy session video uploads and metadata.
+
+        This serializer manages video files uploaded for emotion analysis and therapy
+        documentation. Videos progress through states: pending -> processing ->
+        completed/failed.
+
+        Features:
+        - Automatic file size calculation
+        - Status tracking for analysis pipeline
+        - Integration with therapy sessions and residents
+        - Read-only fields for system-managed data
       properties:
         title:
           type: string
@@ -3385,6 +4643,23 @@ components:
       - username
     Reports:
       type: object
+      description: |-
+        Serializer for monthly therapy reports.
+
+        Manages comprehensive monthly reports that summarize resident therapy
+        progress, session outcomes, and recommendations. Each report covers
+        a specific month and includes:
+
+        **Key Features:**
+        - Monthly therapy session summaries
+        - Progress tracking and analysis
+        - PDF report generation and storage
+        - Resident-specific insights and recommendations
+
+        **File Handling:**
+        - PDF files are uploaded to /media/uploads/reports/
+        - File size limits and format validation apply
+        - Direct download links provided in responses
       properties:
         id:
           type: string
@@ -3413,6 +4688,23 @@ components:
       - url
     ReportsRequest:
       type: object
+      description: |-
+        Serializer for monthly therapy reports.
+
+        Manages comprehensive monthly reports that summarize resident therapy
+        progress, session outcomes, and recommendations. Each report covers
+        a specific month and includes:
+
+        **Key Features:**
+        - Monthly therapy session summaries
+        - Progress tracking and analysis
+        - PDF report generation and storage
+        - Resident-specific insights and recommendations
+
+        **File Handling:**
+        - PDF files are uploaded to /media/uploads/reports/
+        - File size limits and format validation apply
+        - Direct download links provided in responses
       properties:
         report_month:
           type: string
@@ -3440,6 +4732,12 @@ components:
       - email
     Resident:
       type: object
+      description: |-
+        Serializer for resident data with complete information including care home.
+
+        Used for retrieving and updating existing residents. The care_home is
+        read-only and automatically assigned based on the user's permissions
+        during creation.
       properties:
         url:
           type: string
@@ -3469,20 +4767,15 @@ components:
       - id
       - name
       - url
-    ResidentCreate:
-      type: object
-      properties:
-        name:
-          type: string
-          maxLength: 125
-        date_of_birth:
-          type: string
-          format: date
-      required:
-      - date_of_birth
-      - name
     ResidentCreateRequest:
       type: object
+      description: |-
+        Serializer for creating new residents.
+
+        Only requires basic information. The care_home is automatically assigned:
+        - Admin users: Their assigned care home
+        - Manager users: Care home they manage
+        - SuperAdmin: Must be specified in the request
       properties:
         name:
           type: string
@@ -3496,6 +4789,12 @@ components:
       - name
     ResidentRequest:
       type: object
+      description: |-
+        Serializer for resident data with complete information including care home.
+
+        Used for retrieving and updating existing residents. The care_home is
+        read-only and automatically assigned based on the user's permissions
+        during creation.
       properties:
         name:
           type: string
@@ -3521,6 +4820,25 @@ components:
       - detail
     Session:
       type: object
+      description: |-
+        Comprehensive therapy session serializer with resident details.
+
+        Provides complete information about therapy sessions including:
+        - Session scheduling and status information
+        - Resident details with care home context
+        - Feedback completion status
+        - Session notes and duration
+
+        **Status Values:**
+        - scheduled: Session is planned for future
+        - in_progress: Session is currently active
+        - completed: Session finished successfully
+        - cancelled: Session was cancelled
+
+        **Feedback Status:**
+        - Completed: Feedback has been recorded
+        - Pending: Session completed but no feedback yet
+        - Not Applicable: Session not completed
       properties:
         id:
           type: integer
@@ -3569,6 +4887,23 @@ components:
       - updated_at
     SessionCreateUpdate:
       type: object
+      description: |-
+        Serializer for creating and updating therapy sessions.
+
+        Used for scheduling new therapy sessions and updating existing ones.
+        Supports partial updates for status changes and note additions.
+
+        **Required Fields for Creation:**
+        - title: Descriptive name for the session
+        - resident: UUID reference to the resident
+        - scheduled_date: When the session is planned
+        - duration: Session length in minutes
+
+        **Common Update Scenarios:**
+        - Status changes (scheduled → in_progress → completed)
+        - Adding session notes
+        - Updating scheduled times
+        - Modifying session duration
       properties:
         id:
           type: integer
@@ -3608,31 +4943,23 @@ components:
       - updated_at
     SessionCreateUpdateRequest:
       type: object
-      properties:
-        scheduled_date:
-          type: string
-          format: date-time
-        end_time:
-          type: string
-          format: date-time
-          nullable: true
-        status:
-          $ref: '#/components/schemas/Status180Enum'
-        notes:
-          type: string
-          nullable: true
-        resident:
-          type: string
-          format: uuid
-        feedback:
-          type: string
-          format: uuid
-          nullable: true
-      required:
-      - resident
-      - scheduled_date
-    SessionRequest:
-      type: object
+      description: |-
+        Serializer for creating and updating therapy sessions.
+
+        Used for scheduling new therapy sessions and updating existing ones.
+        Supports partial updates for status changes and note additions.
+
+        **Required Fields for Creation:**
+        - title: Descriptive name for the session
+        - resident: UUID reference to the resident
+        - scheduled_date: When the session is planned
+        - duration: Session length in minutes
+
+        **Common Update Scenarios:**
+        - Status changes (scheduled → in_progress → completed)
+        - Adding session notes
+        - Updating scheduled times
+        - Modifying session duration
       properties:
         scheduled_date:
           type: string
@@ -3726,6 +5053,18 @@ components:
       - key
     Video:
       type: object
+      description: |-
+        Video serializer for handling therapy session video uploads and metadata.
+
+        This serializer manages video files uploaded for emotion analysis and therapy
+        documentation. Videos progress through states: pending -> processing ->
+        completed/failed.
+
+        Features:
+        - Automatic file size calculation
+        - Status tracking for analysis pipeline
+        - Integration with therapy sessions and residents
+        - Read-only fields for system-managed data
       properties:
         id:
           type: string
@@ -3771,7 +5110,24 @@ components:
       - uploaded_at
     VideoDetail:
       type: object
-      description: Detailed video serializer with emotion analysis summary and timeline
+      description: |-
+        Detailed video serializer with comprehensive emotion analysis.
+
+        This serializer provides complete video information including metadata,
+        file details, and embedded emotion analysis summary. Used for detailed
+        video views where comprehensive analysis data is needed.
+
+        Includes:
+        - Complete video metadata and file information
+        - Processing status and timestamps
+        - Embedded emotion analysis summary
+        - Therapy session and resident relationships
+
+        Ideal for:
+        - Video detail pages in therapy management systems
+        - Comprehensive progress reports
+        - Clinical analysis dashboards
+        - Research data export
       properties:
         id:
           type: string
@@ -3822,6 +5178,18 @@ components:
       - uploaded_at
     VideoRequest:
       type: object
+      description: |-
+        Video serializer for handling therapy session video uploads and metadata.
+
+        This serializer manages video files uploaded for emotion analysis and therapy
+        documentation. Videos progress through states: pending -> processing ->
+        completed/failed.
+
+        Features:
+        - Automatic file size calculation
+        - Status tracking for analysis pipeline
+        - Integration with therapy sessions and residents
+        - Read-only fields for system-managed data
       properties:
         title:
           type: string
