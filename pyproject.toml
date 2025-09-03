@@ -7,6 +7,7 @@ requires-python = ">=3.9"
 dependencies = [
     "asgiref==3.8.1",
     "cachetools==5.3.3",
+    "celery>=5.5.3",
     "certifi==2024.2.2",
     "charset-normalizer==3.3.2",
     "dj-rest-auth==7.0.1",
@@ -32,6 +33,7 @@ dependencies = [
     "gunicorn==23.0.0",
     "idna==3.7",
     "importlib-metadata==8.4.0",
+    "keras>=3.10.0",
     "markdown==3.6",
     "numpy>=2.0.2",
     "opencv-python>=4.12.0.88",
@@ -46,6 +48,7 @@ dependencies = [
     "python-dateutil==2.9.0.post0",
     "pyyaml==6.0.1",
     "requests==2.31.0",
+    "rich>=14.1.0",
     "rsa==4.9",
     "shortuuid==1.0.13",
     "six==1.16.0",
